@@ -47,7 +47,7 @@ The app bundle is currently about 515 MB because it contains both provider runti
 
 The destination is remembered. Saving starts a fresh document. The scanner's physical Start button is not supported yet; use the app button or Space.
 
-Use **Options → Skip blank pages** to leave clearly blank pages out of the preview and PDF. It applies to either side and single-sided scans. New installations enable it; upgrades preserve the existing preference. Skipped pages retain their original image and can be restored before Save PDF, including when every page was blank. Existing drafts are not reclassified. Faint content, print-through and scanner noise can still require manual review.
+Use **Options → Skip blank pages** to leave clearly blank pages out of the preview and PDF. It applies to either side and single-sided scans. It starts off and upgrades preserve the existing preference. Skipped pages retain their original image and can be restored before Save PDF, including when every page was blank. Existing drafts are not reclassified. Faint content, print-through and scanner noise can still require manual review.
 
 **Move earlier** and **Move later** change the selected page's order in the exported PDF. In **Single page** view, each front and back has its own sidebar row; use the arrows above the preview to move between pages.
 

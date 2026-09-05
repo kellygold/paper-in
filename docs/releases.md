@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.7 — 6 September 2026
+
+Preserves the previous off default when upgrading without a saved blank-skipping preference. Remembers the selected paper mode across restarts, with A4 as the fallback until Auto is explicitly chosen. Rechecks paper capabilities after connecting, including when changing transports. These fixes supersede the initial local 0.3.6 test build.
+
 ## 0.3.6 — 6 September 2026
 
 - Groups Paper, Sides, Options, Scan and Save in one control area. Connection and cleanup preferences live in Options; paper-size limits are explained beside the selection.

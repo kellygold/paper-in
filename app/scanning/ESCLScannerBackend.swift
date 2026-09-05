@@ -130,11 +130,12 @@ final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
     }
     guard capabilities.paperModes.contains(options.paperMode) else {
       message =
-        "This connection does not advertise support for the selected paper size. Choose Standard or reconnect."
+        "This connection does not advertise support for the selected paper size. Choose A4 or reconnect."
       return
     }
     guard !options.duplex || capabilities.supportsDuplex(for: options.paperMode) else {
-      message = "This paper size supports one side at a time. Turn off Both sides before scanning."
+      message =
+        "This paper size supports one side at a time. Choose One under Sides before scanning."
       return
     }
     busy = true

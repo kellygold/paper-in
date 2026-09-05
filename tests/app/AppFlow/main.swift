@@ -88,3 +88,22 @@ try FileManager().removeItem(at: model.root)
 print(
   "PASS all-blank app capture shows recoverable state, restores both pages, and enforces paper/sides transitions"
 )
+
+let suite = "PaperIn-Preferences-\(UUID())"
+let preferences = UserDefaults(suiteName: suite)!
+defer { preferences.removePersistentDomain(forName: suite) }
+precondition(!AppModel.savedSkipBlanks(in: preferences))
+precondition(AppModel.savedPaperMode(in: preferences) == .standard)
+preferences.set(true, forKey: "skipBlankBacks")
+precondition(AppModel.savedSkipBlanks(in: preferences))
+preferences.set(false, forKey: "skipBlanks")
+precondition(!AppModel.savedSkipBlanks(in: preferences))
+preferences.set("automatic", forKey: "paperMode")
+precondition(AppModel.savedPaperMode(in: preferences) == .automatic)
+preferences.set("standard", forKey: "paperMode")
+precondition(AppModel.savedPaperMode(in: preferences) == .standard)
+preferences.set("unknown-mode", forKey: "paperMode")
+precondition(AppModel.savedPaperMode(in: preferences) == .standard)
+print(
+  "PASS absent and legacy preferences preserve off; explicit blank and paper choices survive loading"
+)

@@ -17,11 +17,16 @@ final class AppModel: ObservableObject {
   @Published var failure: String?
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
-  @Published var paperMode: ScanPaperMode = .automatic
+  @Published var paperMode = AppModel.savedPaperMode(in: UserDefaults())
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
-  @Published var skipBlanks =
-    UserDefaults().object(forKey: "skipBlanks") as? Bool
-    ?? UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? true
+  @Published var skipBlanks = AppModel.savedSkipBlanks(in: UserDefaults())
+  static func savedSkipBlanks(in defaults: UserDefaults) -> Bool {
+    defaults.object(forKey: "skipBlanks") as? Bool
+      ?? defaults.object(forKey: "skipBlankBacks") as? Bool ?? false
+  }
+  static func savedPaperMode(in defaults: UserDefaults) -> ScanPaperMode {
+    ScanPaperMode(rawValue: defaults.string(forKey: "paperMode") ?? "standard") ?? .standard
+  }
   @Published var exporting = false
   @Published var exportPending = false
   @Published var hasRemovedPages = false
@@ -46,6 +51,7 @@ final class AppModel: ObservableObject {
   }
   func choosePaperMode(_ mode: ScanPaperMode) {
     paperMode = mode
+    if !demo { UserDefaults().set(mode.rawValue, forKey: "paperMode") }
     if (demo || scanner.connected) && !canScanBothSides { duplex = false }
   }
   func reconcilePaperModes() {

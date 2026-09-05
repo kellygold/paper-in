@@ -199,6 +199,7 @@ struct ContentView: View {
     .onChange(of: scanner.paperModes) { _, _ in
       model.reconcilePaperModes()
     }
+    .onChange(of: scanner.connected) { _, _ in model.reconcilePaperModes() }
     .onAppear { renderIfRequested() }
   }
   private func renderIfRequested() {
