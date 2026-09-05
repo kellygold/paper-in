@@ -159,12 +159,12 @@ struct ContentView: View {
               ).font(.caption).foregroundStyle(.secondary)
               Spacer()
               Button {
-                if let id = model.selected { model.edit { try $0.move(id, by: -1) } }
+                model.moveSelectedPage(by: -1)
               } label: {
                 Label("Move earlier", systemImage: "arrow.up")
               }.disabled((model.selectedPageIndex ?? 0) == 0)
               Button {
-                if let id = model.selected { model.edit { try $0.move(id, by: 1) } }
+                model.moveSelectedPage(by: 1)
               } label: {
                 Label("Move later", systemImage: "arrow.down")
               }.disabled((model.selectedPageIndex ?? 0) >= model.pages.count - 1)

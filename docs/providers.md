@@ -27,7 +27,9 @@ The adapters use OpenAI Responses and Anthropic Messages with structured JSON ou
 
 ## Runtime paths and retries
 
-AI filing needs Node.js 22+. Common Homebrew and nvm paths are detected automatically. If needed, set the Node executable under **Runtime paths**. Optional provider executable overrides let you use a specific local installation; blank means the SDK default.
+AI filing needs Node.js 22+. Common Homebrew and nvm paths are detected automatically. If needed, set the Node executable under **Runtime paths**. Optional provider executable overrides let you use a specific local installation; blank means the SDK default. Codex overrides must match the tested CLI version, currently 0.153.4; other versions are rejected until their tool controls have been validated.
+
+Before each Codex classification, the official runtime enumerates MCP configuration without starting the servers. Paper In disables each server, verifies the result, and uses the same overrides for the model request. It also disables shell, browser, plugin, hook and other integration features. A project `.codex/config.toml` in the runtime directory or its ancestors is rejected because this enumeration cannot reliably cover project layers. Your global config and login remain unchanged. This guards against tools triggered by document text; it is not a defense against another local process changing configuration during a request.
 
 New queued jobs capture their selected provider/model. **Retry analysis** uses current settings, so correcting a model, provider, or runtime path takes effect on retry. API keys are read from Keychain at execution time, never stored in job metadata. Ambient provider API keys are stripped from runtime environments so an existing-login adapter does not silently switch to API-key billing.
 

@@ -25,15 +25,12 @@ struct ScanControls: View {
           Text("One").tag(false)
           Text("Both").tag(true).disabled(!model.canScanBothSides)
         }.pickerStyle(.segmented).frame(width: 165)
-          .disabled(!model.canEdit || !model.canScanBothSides)
+          .disabled(!model.canEdit)
           .help(
             model.canScanBothSides
               ? "Scan one side or both sides of each sheet."
               : "This paper mode supports one side at a time."
           )
-          .onChange(of: model.duplex) { _, value in
-            if !model.demo { UserDefaults().set(value, forKey: "bothSides") }
-          }
         Button {
           showingOptions.toggle()
         } label: {

@@ -15,7 +15,17 @@ struct FilingSettingsView: View {
         "Your PDF is saved first. AI can then name it, find its folder and check related documents while you keep scanning."
       ).foregroundStyle(.secondary)
       Toggle("Enable AI filing for new scans", isOn: $configuration.enabled)
-      Picker("Provider", selection: $configuration.provider) {
+      Picker(
+        "Provider",
+        selection: Binding(
+          get: { configuration.provider },
+          set: { next in
+            guard next != configuration.provider else { return }
+            configuration.provider = next
+            configuration.model = ""
+            key = ""
+          })
+      ) {
         ForEach(filing.providers) { provider in Text(provider.name).tag(provider.id) }
       }
       TextField(
@@ -81,10 +91,6 @@ struct FilingSettingsView: View {
       Color(red: 0.98, green: 0.975, blue: 0.96)
     )
     .onAppear { configuration = filing.settings }
-    .onChange(of: configuration.provider) { _, _ in
-      key = ""
-      configuration.model = ""
-    }
   }
 }
 struct FilingReviewView: View {
@@ -147,8 +153,16 @@ struct FilingReviewView: View {
             if job.state == "filed" {
               Button("Undo filing") { filing.perform("undo", id: job.id) }.disabled(filing.busy)
             }
-            if ["failed", "undone"].contains(job.state) {
-              Button("Retry analysis") { filing.perform("retry", id: job.id) }.disabled(filing.busy)
+            if ["failed", "undone", "publishing", "undoing"].contains(job.state) {
+              Button(
+                ["publishing", "undoing"].contains(job.state) ? "Retry filing" : "Retry analysis"
+              ) {
+                filing.perform("retry", id: job.id)
+              }.disabled(filing.busy)
+            }
+            if job.state == "filed" && job.error != nil {
+              Button("Retry inbox cleanup") { filing.perform("apply", id: job.id) }
+                .disabled(filing.busy)
             }
             Button("Show PDF in Finder") {
               let path = job.state == "filed" ? (job.target ?? job.original) : job.original

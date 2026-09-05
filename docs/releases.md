@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.3.9 — 6 September 2026
+
+- A failed filing or Undo no longer blocks later documents. Interrupted operations keep their target and can be retried when the original destination is available again.
+- Incomplete and damaged queue records no longer hide healthy jobs. Inbox cleanup runs separately from successful filing; a cleanup warning preserves Filed status and offers its own retry.
+- Preserves the preferred side count across long-paper/capability changes and keeps the saved provider model when opening AI settings. Optional startup crop errors leave recovered pages accessible.
+- Moving a page switches to Single page view to show the actual PDF order.
+- Codex verifies configured MCP servers are disabled using the pinned runtime, rejects unenumerated project config, and disables execution/integration features before classification. Unsupported runtime versions fail closed; blank runtime path uses the tested SDK default.
+
 ## 0.3.8 — 6 September 2026
 
 Adds a second local blank-detection pass for cropped paper on a known scanner background. It follows skewed or curled borders and checks for connected ink strokes separately from broad, soft shadows and print-through. This addresses receipt backs retained by the earlier global ink-count check. The strict detector remains the first pass, and uncertain pages remain visible. Original images, restoration and existing draft edits are preserved; the change applies to newly received pages.

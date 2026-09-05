@@ -77,7 +77,12 @@ final class FilingController: ObservableObject {
         .compactMap { dir -> FilingJob? in
           let file = dir.appendingPathComponent("job.json")
           guard fm.fileExists(atPath: file.path) else { return nil }
-          return try JSONDecoder().decode(FilingJob.self, from: Data(contentsOf: file))
+          do {
+            return try JSONDecoder().decode(FilingJob.self, from: Data(contentsOf: file))
+          } catch {
+            self.error = "A filing record could not be read. Other documents remain available."
+            return nil
+          }
         }.sorted { $0.created > $1.created }
     } catch { self.error = "A filing record could not be read. Its original PDF is preserved." }
   }
@@ -164,6 +169,7 @@ final class FilingController: ObservableObject {
       process = task
       DispatchQueue.global(qos: .utility).async {
         var failure: String?
+        var completed = false
         do {
           try task.run()
           DispatchQueue.global(qos: .utility).async {
@@ -173,10 +179,12 @@ final class FilingController: ObservableObject {
           try stdin.fileHandleForWriting.close()
           let output = stdout.fileHandleForReading.readDataToEndOfFile()
           task.waitUntilExit()
-          if let result = try JSONSerialization.jsonObject(with: output) as? [String: Any],
-            result["ok"] as? Bool != true
-          {
-            failure = result["error"] as? String ?? "Filing failed."
+          if let result = try JSONSerialization.jsonObject(with: output) as? [String: Any] {
+            completed = result["ok"] as? Bool == true && task.terminationStatus == 0
+            failure =
+              completed
+              ? result["warning"] as? String
+              : result["error"] as? String ?? "Filing failed."
           } else if task.terminationStatus != 0 {
             failure = "AI worker stopped. The PDF is safe; retry when ready."
           }
@@ -191,7 +199,7 @@ final class FilingController: ObservableObject {
           self.refresh()
           let again = self.rerun || command == "retry"
           self.rerun = false
-          if again && failure == nil { self.run() }
+          if again && completed { self.run() }
         }
       }
     } catch { self.error = error.localizedDescription }

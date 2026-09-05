@@ -1,9 +1,10 @@
 import AppKit
 import PDFKit
+import SwiftUI
 
 precondition(CommandLine.arguments.contains("--demo"))
 let model = AppModel()
-model.duplex = true
+model.chooseSides(true)
 precondition(
   model.demo && model.pages.count == 2 && model.sheets.count == 1
     && model.selectedSheet?.paired == true)
@@ -81,10 +82,14 @@ model.choosePaperMode(.longPaper)
 model.chooseSides(true)
 precondition(!model.duplex && !model.canScanBothSides)
 model.choosePaperMode(.automatic)
-precondition(model.canScanBothSides)
-model.duplex = true
+precondition(
+  model.canScanBothSides && model.duplex, "Supported paper must restore the preferred sides")
+model.chooseSides(false)
+model.choosePaperMode(.longPaper)
+model.choosePaperMode(.standard)
+precondition(!model.duplex, "An explicit One choice must remain One")
+model.chooseSides(true)
 precondition(model.skippedPageCount == 0)
-try FileManager().removeItem(at: model.root)
 print(
   "PASS all-blank app capture shows recoverable state, restores both pages, and enforces paper/sides transitions"
 )
@@ -107,3 +112,56 @@ precondition(AppModel.savedPaperMode(in: preferences) == .standard)
 print(
   "PASS absent and legacy preferences preserve off; explicit blank and paper choices survive loading"
 )
+
+// Reordering changes the PDF's page order, so show that order instead of paired groups.
+model.scan()
+model.scan()
+let order = model.pages.map(\.id)
+precondition(order.count == 4)
+model.pairedPreview = true
+model.select(order[2])
+model.moveSelectedPage(by: -1)
+precondition(
+  !model.pairedPreview && model.pages.map(\.id) == [order[0], order[2], order[1], order[3]])
+precondition(model.selected == order[2])
+print("PASS page movement displays the actual PDF order while preserving selection")
+
+// A legacy page that cannot be cropped must not hide the recovered document.
+let manifest = model.store!.folder.appendingPathComponent("manifest.json")
+var legacy = try JSONSerialization.jsonObject(with: Data(contentsOf: manifest)) as! [String: Any]
+var legacyPages = legacy["pages"] as! [[String: Any]]
+for index in legacyPages.indices { legacyPages[index].removeValue(forKey: "cropReviewed") }
+legacy["pages"] = legacyPages
+try JSONSerialization.data(withJSONObject: legacy).write(to: manifest)
+let brokenSource = model.store!.folder.appendingPathComponent("sources/\(model.pages.last!.source)")
+try Data("synthetic damaged image".utf8).write(to: brokenSource)
+model.selected = order[0]
+model.restoreDraft(autoCrop: true)
+precondition(model.pages.count == 4 && model.canEdit && model.failure != nil)
+model.select(order[0])
+precondition(model.preview != nil, "Healthy recovered pages must still be usable")
+print("PASS startup crop failure preserves visible legacy pages and healthy previews")
+
+// Mount the real settings view: loading a saved provider must not clear its model.
+let application = NSApplication.shared
+application.setActivationPolicy(.accessory)
+model.filing.settings.provider = "openaiAPI"
+model.filing.settings.model = "synthetic-saved-model"
+let window = NSWindow(
+  contentRect: NSRect(x: -3000, y: 0, width: 620, height: 800),
+  styleMask: [.titled], backing: .buffered, defer: false)
+window.isReleasedWhenClosed = false
+window.contentView = NSHostingView(rootView: FilingSettingsView(filing: model.filing))
+window.orderBack(nil)
+let renderDeadline = Date().addingTimeInterval(1)
+while Date() < renderDeadline { RunLoop.main.run(until: Date().addingTimeInterval(0.05)) }
+func fieldValues(_ view: NSView) -> [String] {
+  let current = (view as? NSTextField).map { [$0.stringValue] } ?? []
+  return current + view.subviews.flatMap(fieldValues)
+}
+precondition(fieldValues(window.contentView!).contains("synthetic-saved-model"))
+window.orderOut(nil)
+print("PASS opening AI settings keeps the saved provider model in the actual text field")
+model.filing.stop()
+model.scanner.pause()
+try FileManager().removeItem(at: model.root)

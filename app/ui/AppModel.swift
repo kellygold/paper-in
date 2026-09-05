@@ -17,6 +17,7 @@ final class AppModel: ObservableObject {
   @Published var failure: String?
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
+  private var preferredDuplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
   @Published var paperMode = AppModel.savedPaperMode(in: UserDefaults())
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
   @Published var skipBlanks = AppModel.savedSkipBlanks(in: UserDefaults())
@@ -47,16 +48,19 @@ final class AppModel: ObservableObject {
   }
   func chooseSides(_ both: Bool) {
     guard !both || canScanBothSides else { return }
+    preferredDuplex = both
     duplex = both
+    if !demo { UserDefaults().set(both, forKey: "bothSides") }
   }
   func choosePaperMode(_ mode: ScanPaperMode) {
     paperMode = mode
     if !demo { UserDefaults().set(mode.rawValue, forKey: "paperMode") }
-    if (demo || scanner.connected) && !canScanBothSides { duplex = false }
+    if demo || scanner.connected { duplex = preferredDuplex && canScanBothSides }
   }
   func reconcilePaperModes() {
     guard !demo, scanner.connected else { return }
     if !scanner.paperModes.contains(paperMode) { choosePaperMode(.standard) }
+    duplex = preferredDuplex && canScanBothSides
   }
   var canEdit: Bool { store != nil && !scanner.busy && !exporting && !exportPending }
 
@@ -83,24 +87,16 @@ final class AppModel: ObservableObject {
     filing = FilingController(root: root, demo: demo)
     scanner = ScannerCatalog.makeSession(
       staging: root.appendingPathComponent("transfers"), connection: savedConnection)
-    do {
-      store = try DraftStore(root: root)
-      if autoCrop && !demo { try store?.cropUnreviewedPages() }
-      if store?.draft.interrupted == true {
-        notice =
-          "The last scan was interrupted. Your saved pages are here; check the last sheet before continuing."
-      }
-      if demo {
+    restoreDraft(autoCrop: autoCrop && !demo)
+    if demo {
+      do {
         try store?.beginCapture(expectedSides: 2)
         try makeSample()
         try makeSample()
         try store?.completeCapture(success: true)
         notice = "Preview mode — no scanner connection"
-      }
+      } catch { failure = error.localizedDescription }
       refresh()
-    } catch {
-      failure =
-        "Couldn’t open the draft: \(error.localizedDescription). Existing files have been preserved."
     }
     scanner.onBegin = { [weak self] options in
       guard let self, let store = self.store, !self.exporting else {
@@ -127,6 +123,24 @@ final class AppModel: ObservableObject {
       self.refresh()
     }
   }
+  func restoreDraft(autoCrop: Bool) {
+    defer { refresh() }
+    do { store = try DraftStore(root: root) } catch {
+      failure =
+        "Couldn’t open the draft: \(error.localizedDescription). Existing files have been preserved."
+      return
+    }
+    if store?.draft.interrupted == true {
+      notice =
+        "The last scan was interrupted. Your saved pages are here; check the last sheet before continuing."
+    }
+    do {
+      if autoCrop { try store?.cropUnreviewedPages() }
+    } catch {
+      failure =
+        "Your draft is restored, but some pages could not be cropped: \(error.localizedDescription)"
+    }
+  }
   func refresh(selectLast: Bool = false) {
     pages = store?.visiblePages ?? []
     sheets = SheetGroup.make(store?.draft.pages ?? [])
@@ -143,6 +157,7 @@ final class AppModel: ObservableObject {
       preview = nil
       return
     }
+    preview = nil
     do {
       preview = try store?.preview(page)
       for sibling in selectedSheet?.visible ?? [] {
@@ -154,6 +169,15 @@ final class AppModel: ObservableObject {
   func navigatePage(by offset: Int) {
     guard let index = selectedPageIndex, pages.indices.contains(index + offset) else { return }
     select(pages[index + offset].id)
+  }
+  func moveSelectedPage(by offset: Int) {
+    guard canEdit, let store, let id = selected else { return }
+    do {
+      try store.move(id, by: offset)
+      pairedPreview = false
+      refresh()
+      notice = "Page moved. Single page view shows the PDF order."
+    } catch { failure = error.localizedDescription }
   }
   func edit(_ action: (DraftStore) throws -> Void) {
     guard canEdit, let store else { return }
