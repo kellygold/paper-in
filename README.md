@@ -19,6 +19,8 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 
 Scanning works without an AI account. AI filing is off by default.
 
+See the [0.3.1 release notes](docs/releases.md) for the latest changes and validation limits.
+
 ## Get it running
 
 This is an early project built from source. There is no signed installer yet. The build is tested on Apple Silicon; macOS 14 or later is required. Other Mac architectures and scanner models are not yet verified.
