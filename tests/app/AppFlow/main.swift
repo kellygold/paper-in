@@ -3,6 +3,7 @@ import PDFKit
 
 precondition(CommandLine.arguments.contains("--demo"))
 let model = AppModel()
+model.duplex = true
 precondition(
   model.demo && model.pages.count == 2 && model.sheets.count == 1
     && model.selectedSheet?.paired == true)
@@ -58,15 +59,16 @@ let bitmap = NSBitmapImageRep(
 memset(bitmap.bitmapData!, 255, bitmap.bytesPerRow * bitmap.pixelsHigh)
 let blank = model.root.appendingPathComponent("blank-back.png")
 try bitmap.representation(using: .png, properties: [:])!.write(to: blank)
-model.skipBlankBacks = true
+model.skipBlanks = true
 try model.scanner.onBegin?(ScanOptions(duplex: true))
 try model.scanner.onPage?(blank, 300)
 try model.scanner.onPage?(blank, 300)
 model.scanner.onEnd?(true, nil)
-precondition(model.pages.count == 1 && model.hasRemovedPages && model.sheets.count == 1)
-let skipped = model.selectedSheet!.page(side: 1)!
-precondition(skipped.blankBackSkipped == true && model.sheetPreviews.count == 1)
+precondition(model.pages.isEmpty && model.hasRemovedPages && model.sheets.isEmpty)
+let skipped = model.store!.draft.pages.last!
+precondition(skipped.blankSkipped == true && model.sheetPreviews.isEmpty)
 model.edit { try $0.restore(skipped.id) }
+model.edit { try $0.restoreLastRemoved() }
 precondition(model.pages.count == 2 && !model.hasRemovedPages && model.sheetPreviews.count == 2)
 model.save()
 let blankDeadline = Date().addingTimeInterval(20)
@@ -75,7 +77,14 @@ while model.exporting && Date() < blankDeadline {
 }
 precondition(!model.exporting && model.pages.isEmpty && model.failure == nil)
 precondition(PDFDocument(url: model.lastExport!)?.pageCount == 2)
+model.choosePaperMode(.longPaper)
+model.chooseSides(true)
+precondition(!model.duplex && !model.canScanBothSides)
+model.choosePaperMode(.automatic)
+precondition(model.canScanBothSides)
+model.duplex = true
+precondition(model.skippedPageCount == 0)
 try FileManager().removeItem(at: model.root)
 print(
-  "PASS app callbacks skip a blank back, update paired previews, restore that exact side and export both pages"
+  "PASS all-blank app capture shows recoverable state, restores both pages, and enforces paper/sides transitions"
 )

@@ -67,3 +67,9 @@ The `app/`, `ai/`, and unified `tests/` layout passed all 47 existing automated 
 - Validate build instructions on a clean supported Mac, then complete Developer ID signing/notarization and dependency redistribution review.
 - Confirm the public app's provider authentication eligibility; technical success does not resolve provider terms.
 - Publish a compatibility list with observed hardware results, not inferred support.
+
+## Auto paper and general blank skipping (0.3.6 candidate)
+
+The scanner's advertised AutoCrop flag and per-source dimensions gate an experimental Auto request. Offline fixtures verify the request on both transports and reject it when unsupported. This does **not** prove the firmware honors the crop flag. Actual image bounds, edge quality and extra-long behavior require physical scanning; no unattended scan is part of these checks.
+
+General blank-skipping tests cover blank fronts with printed backs, both sides blank, simplex/imports, disabled cleanup, restoration after restart, and rejection of empty PDF export. The application flow also clears stale previews when all pages disappear. The new controls separate paper/sides choices from cleanup and connection preferences.

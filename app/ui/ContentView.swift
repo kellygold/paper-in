@@ -39,7 +39,11 @@ struct ContentView: View {
             Text("\(model.pages.count)").monospacedDigit().font(.system(size: 12, weight: .medium))
           }
           if model.pages.isEmpty {
-            Text("Your pages will appear here.").font(.callout).foregroundStyle(.secondary).padding(
+            Text(
+              model.skippedPageCount > 0
+                ? "Blank pages were skipped. You can restore them below."
+                : "Your pages will appear here."
+            ).font(.callout).foregroundStyle(.secondary).padding(
               .top, 10)
           }
           ScrollView {
@@ -60,8 +64,8 @@ struct ContentView: View {
                             ? "Page \(index + 1)" : "Sheet \(index + 1)"
                         ).font(.system(size: 13, weight: .medium))
                         Text(
-                          sheet.pages.contains(where: { $0.blankBackSkipped == true })
-                            ? "Blank back skipped" : (sheet.paired ? "Front + back" : "One side")
+                          sheet.pages.contains(where: { $0.blankSkipped == true })
+                            ? "Blank page skipped" : (sheet.paired ? "Front + back" : "One side")
                         ).font(.system(size: 10))
                           .foregroundStyle(.secondary)
                       }
@@ -111,8 +115,14 @@ struct ContentView: View {
             VStack(spacing: 15) {
               Image(systemName: "scanner").font(.system(size: 48, weight: .ultraLight))
                 .foregroundStyle(green)
-              Text("Start with a sheet of paper").font(.system(size: 23, weight: .medium))
-              Text("Scan each sheet, then save them together as one PDF.").foregroundStyle(
+              Text(
+                model.skippedPageCount > 0 ? "Blank pages skipped" : "Start with a sheet of paper"
+              ).font(.system(size: 23, weight: .medium))
+              Text(
+                model.skippedPageCount > 0
+                  ? "Add another sheet, or restore a skipped page from the sidebar."
+                  : "Scan each sheet, then save them together as one PDF."
+              ).foregroundStyle(
                 .secondary)
               if let last = model.lastExport {
                 Button("Show saved PDF") { NSWorkspace.shared.activateFileViewerSelecting([last]) }
@@ -182,120 +192,12 @@ struct ContentView: View {
         }.frame(maxWidth: .infinity, maxHeight: .infinity)
       }
       Divider()
-      VStack(alignment: .leading, spacing: 12) {
-        FilingToolbar(filing: model.filing)
-        HStack(spacing: 10) {
-          Picker("Connection", selection: $model.connection) {
-            ForEach(ScannerConnection.allCases) { connection in
-              Text(connection.title).tag(connection)
-            }
-          }.pickerStyle(.segmented).frame(width: 180)
-            .disabled(scanner.busy || model.exporting)
-            .onChange(of: model.connection) { _, value in model.changeConnection(value) }
-          if model.connection == .network {
-            Text("Scanner and Mac must be on the same local network.").font(.caption)
-              .foregroundStyle(.secondary)
-          }
-          Spacer()
-          Toggle("Skip blank backs", isOn: $model.skipBlankBacks)
-            .toggleStyle(.checkbox).font(.caption)
-            .disabled(!model.canEdit || !model.duplex)
-            .help(
-              "Skip clearly blank backs in new scans. Originals stay saved and can be restored before Save PDF."
-            )
-            .onChange(of: model.skipBlankBacks) { _, value in
-              if !model.demo { UserDefaults().set(value, forKey: "skipBlankBacks") }
-            }
-        }
-        if let failure = model.failure {
-          Label(failure, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(
-            Color(red: 0.65, green: 0.20, blue: 0.12)
-          ).textSelection(.enabled)
-        }
-        if let notice = model.notice {
-          Text(notice).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
-        }
-        HStack {
-          VStack(alignment: .leading, spacing: 5) {
-            Text(model.demo ? "Preview mode — scanner is untouched" : scanner.message).font(
-              .system(size: 13, weight: .medium)
-            ).textSelection(.enabled)
-            HStack(spacing: 6) {
-              Picker("Paper", selection: $model.paperMode) {
-                ForEach(model.demo ? ScanPaperMode.allCases : scanner.paperModes) { mode in
-                  Text(mode.title).tag(mode)
-                }
-              }.frame(width: 185).disabled(!model.canEdit)
-                .onChange(of: model.paperMode) { _, mode in
-                  if !scanner.supportsDuplex(for: mode) { model.duplex = false }
-                }
-              Text("300 dpi · Colour").font(.caption).foregroundStyle(.secondary)
-              Toggle("Both sides", isOn: $model.duplex).toggleStyle(.checkbox).font(.caption)
-                .disabled(
-                  !model.canEdit || (!model.demo && !scanner.supportsDuplex(for: model.paperMode))
-                )
-                .onChange(of: model.duplex) { _, value in
-                  scanner.duplex = value
-                  if !model.demo { UserDefaults().set(value, forKey: "bothSides") }
-                }
-              Toggle("Auto crop", isOn: $model.autoCrop).toggleStyle(.checkbox).font(.caption)
-                .disabled(!model.canEdit)
-                .onChange(of: model.autoCrop) { _, value in
-                  if !model.demo { UserDefaults().set(value, forKey: "autoCrop") }
-                }
-            }
-            if model.paperMode == .longPaper {
-              Text(
-                "One side at a time · Up to 1.8 m · Close the output guide for a straight paper path."
-              )
-              .font(.caption).foregroundStyle(.secondary)
-            }
-            if !model.demo && !scanner.buttonObserved {
-              Text("Use Scan or Space to add a sheet.").font(.system(size: 10)).foregroundStyle(
-                .secondary)
-            }
-          }
-          Spacer(minLength: 16)
-          if scanner.busy { Button("Stop") { scanner.pause() } }
-          Button {
-            model.scan()
-          } label: {
-            Label(model.pages.isEmpty ? "Scan" : "Scan next page", systemImage: "plus").padding(
-              .horizontal, 8
-            ).padding(.vertical, 7)
-          }
-          .keyboardShortcut(.space, modifiers: []).disabled(
-            !model.canEdit || (!model.demo && !scanner.connected))
-          Button {
-            model.save()
-          } label: {
-            Text(model.exporting ? "Saving…" : "Save PDF").fontWeight(.semibold).padding(
-              .horizontal, 16
-            ).padding(.vertical, 7)
-          }
-          .buttonStyle(.borderedProminent).tint(green).keyboardShortcut("s", modifiers: .command)
-          .disabled(scanner.busy || model.exporting || model.pages.isEmpty || model.store == nil)
-        }
-        HStack(spacing: 5) {
-          Image(systemName: "folder")
-          Text("Save to:")
-          Text(
-            model.destination.path.replacingOccurrences(
-              of: FileManager().homeDirectoryForCurrentUser.path, with: "~")
-          ).lineLimit(1).truncationMode(.middle)
-          Button("Change…") { model.chooseFolder() }.buttonStyle(.link).disabled(!model.canEdit)
-          Spacer()
-          if model.pages.count > 0 {
-            Text("\(model.pages.count) \(model.pages.count == 1 ? "page" : "pages") saved in draft")
-              .foregroundStyle(green)
-          }
-        }.font(.system(size: 11)).foregroundStyle(.secondary)
-      }.padding(20)
+      ScanControls(model: model, scanner: scanner)
     }
     .frame(minWidth: 900, minHeight: 660)
     .background(Color(red: 0.98, green: 0.975, blue: 0.96))
-    .onChange(of: scanner.paperModes) { _, modes in
-      if !modes.contains(model.paperMode) { model.paperMode = .standard }
+    .onChange(of: scanner.paperModes) { _, _ in
+      model.reconcilePaperModes()
     }
     .onAppear { renderIfRequested() }
   }

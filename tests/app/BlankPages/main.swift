@@ -122,28 +122,28 @@ print(
 
 let store = try DraftStore(root: root.appendingPathComponent("store"))
 try store.beginCapture(expectedSides: 2)
-try store.ingest(blank, skipBlankBacks: true)  // Blank front must remain.
-try store.ingest(blank, skipBlankBacks: true)
+try store.ingest(ink, skipBlanks: true)
+try store.ingest(blank, skipBlanks: true)
 try store.completeCapture(success: true)
 let front = store.draft.pages[0]
 let back = store.draft.pages[1]
-precondition(!front.removed && back.removed && back.blankBackSkipped == true)
+precondition(!front.removed && back.removed && back.blankSkipped == true)
 precondition(front.side == 0 && back.side == 1 && front.sheetID == back.sheetID)
 let originalBytes = try Data(contentsOf: blank)
 let savedBytes = try Data(contentsOf: store.folder.appendingPathComponent("sources/" + back.source))
 precondition(originalBytes == savedBytes)
 let reloaded = try DraftStore(root: store.root)
-precondition(reloaded.visiblePages.count == 1 && reloaded.draft.pages[1].blankBackSkipped == true)
+precondition(reloaded.visiblePages.count == 1 && reloaded.draft.pages[1].blankSkipped == true)
 let output = try reloaded.export(to: root.appendingPathComponent("output"))
 precondition(PDFDocument(url: output)?.pageCount == 1)
 print(
-  "PASS only a known duplex back is skipped; originals, pairing, restart and PDF page count remain correct"
+  "PASS duplex blank skipping preserves originals, pairing, restart and PDF page count remain correct"
 )
 
 let restored = try DraftStore(root: root.appendingPathComponent("restored"))
 try restored.beginCapture(expectedSides: 2)
-try restored.ingest(ink, skipBlankBacks: true)
-try restored.ingest(blank, skipBlankBacks: true)
+try restored.ingest(ink, skipBlanks: true)
+try restored.ingest(blank, skipBlanks: true)
 try restored.completeCapture(success: true)
 let backID = restored.draft.pages[1].id
 let frontID = restored.draft.pages[0].id
@@ -151,13 +151,13 @@ try restored.remove(frontID)
 precondition(restored.visiblePages.isEmpty)
 try restored.restoreLastRemoved()
 precondition(
-  restored.visiblePages.map(\.id) == [frontID] && restored.draft.pages[1].blankBackSkipped == true)
+  restored.visiblePages.map(\.id) == [frontID] && restored.draft.pages[1].blankSkipped == true)
 try restored.restore(backID)
 let resumed = try DraftStore(root: restored.root)
-precondition(resumed.visiblePages.count == 2 && resumed.draft.pages[1].blankBackSkipped == nil)
+precondition(resumed.visiblePages.count == 2 && resumed.draft.pages[1].blankSkipped == nil)
 try resumed.beginCapture(expectedSides: 2)
-try resumed.ingest(ink, skipBlankBacks: true)
-try resumed.ingest(ink, skipBlankBacks: true)
+try resumed.ingest(ink, skipBlanks: true)
+try resumed.ingest(ink, skipBlanks: true)
 try resumed.completeCapture(success: true)
 let restoredPDF = try resumed.export(to: root.appendingPathComponent("output"))
 precondition(PDFDocument(url: restoredPDF)?.pageCount == 4)
@@ -168,30 +168,57 @@ try disabled.beginCapture(expectedSides: 2)
 try disabled.ingest(blank)
 try disabled.ingest(blank)
 try disabled.completeCapture(success: true)
-try disabled.ingest(blank, skipBlankBacks: true)  // Unpaired import is not a known back.
+try disabled.ingest(blank, skipBlanks: true)  // Explicit cleanup also applies to imports.
 try disabled.beginCapture(expectedSides: 1)
-try disabled.ingest(blank, skipBlankBacks: true)
+try disabled.ingest(blank, skipBlanks: true)
 try disabled.completeCapture(success: true)
-precondition(disabled.visiblePages.count == 4)
-print("PASS disabled setting, legacy/unpaired imports and simplex pages retain every image")
+precondition(disabled.visiblePages.count == 2 && disabled.draft.pages.count == 4)
+print("PASS disabled cleanup keeps pages; enabled cleanup skips blank imports and simplex pages")
 
 let interrupted = try DraftStore(root: root.appendingPathComponent("interrupted"))
 try interrupted.beginCapture(expectedSides: 2)
-try interrupted.ingest(ink, skipBlankBacks: true)
+try interrupted.ingest(ink, skipBlanks: true)
 interrupted.beforeWrite = { destination in
   if destination.lastPathComponent == "manifest.json" {
     throw PaperError("Injected manifest failure")
   }
 }
 do {
-  try interrupted.ingest(blank, skipBlankBacks: true)
+  try interrupted.ingest(blank, skipBlanks: true)
   fatalError("Manifest failure not injected")
 } catch {}
 let recovered = try DraftStore(root: interrupted.root)
 precondition(recovered.draft.pages.count == 2 && recovered.visiblePages.count == 1)
-precondition(recovered.draft.pages[1].blankBackSkipped == true && recovered.draft.interrupted)
+precondition(recovered.draft.pages[1].blankSkipped == true && recovered.draft.interrupted)
 try recovered.restoreLastRemoved()
 precondition(recovered.visiblePages.count == 2)
 print(
   "PASS interrupted ingestion recovers the skip decision and original side through the durable envelope"
 )
+
+let upsideDown = try DraftStore(root: root.appendingPathComponent("upside-down"))
+try upsideDown.beginCapture(expectedSides: 2)
+try upsideDown.ingest(blank, skipBlanks: true)
+try upsideDown.ingest(ink, skipBlanks: true)
+try upsideDown.completeCapture(success: true)
+precondition(upsideDown.visiblePages.count == 1 && upsideDown.visiblePages[0].side == 1)
+precondition(upsideDown.draft.pages[0].blankSkipped == true)
+let upsidePDF = try upsideDown.export(to: root.appendingPathComponent("output"))
+precondition(PDFDocument(url: upsidePDF)?.pageCount == 1)
+print("PASS blank front is skipped and printed back survives as one PDF page")
+
+let allBlank = try DraftStore(root: root.appendingPathComponent("all-blank"))
+try allBlank.beginCapture(expectedSides: 2)
+try allBlank.ingest(blank, skipBlanks: true)
+try allBlank.ingest(blank, skipBlanks: true)
+try allBlank.completeCapture(success: true)
+let blankReload = try DraftStore(root: allBlank.root)
+precondition(blankReload.visiblePages.isEmpty && blankReload.draft.pages.count == 2)
+do {
+  _ = try blankReload.export(to: root.appendingPathComponent("output"))
+  fatalError("Empty PDF accepted")
+} catch {}
+try blankReload.restoreLastRemoved()
+try blankReload.restoreLastRemoved()
+precondition(blankReload.visiblePages.count == 2)
+print("PASS all-blank sheet remains recoverable after restart and cannot export an empty PDF")

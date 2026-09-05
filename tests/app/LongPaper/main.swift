@@ -30,7 +30,7 @@ precondition(CGImageDestinationFinalize(dest))
 let bytes = try Data(contentsOf: input)
 let store = try DraftStore(root: root.appendingPathComponent("store"))
 try store.beginCapture(expectedSides: 1)
-try store.ingest(input, dpi: 300, autoCrop: true, skipBlankBacks: true)
+try store.ingest(input, dpi: 300, autoCrop: true, skipBlanks: true)
 try store.completeCapture(success: true)
 let restored = try DraftStore(root: store.root)
 let page = restored.visiblePages[0]

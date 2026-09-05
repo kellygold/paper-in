@@ -42,6 +42,29 @@ final class FixtureScanner: URLProtocol {
   static let capabilities = Data(
     "<ScannerCapabilities><MakeAndModel>DS-940DW</MakeAndModel><AdfOption>Duplex</AdfOption><Adf><AdfSimplexInputCaps><MaxHeight>36600</MaxHeight></AdfSimplexInputCaps><AdfDuplexInputCaps><MaxHeight>4200</MaxHeight></AdfDuplexInputCaps></Adf></ScannerCapabilities>"
       .utf8)
+  static let autoCapabilities = Data(
+    """
+    <scan:ScannerCapabilities xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03">
+    <scan:MakeAndModel>DS-940DW</scan:MakeAndModel><scan:AdfOption>Duplex</scan:AdfOption>
+    <scan:AutoCrop>true</scan:AutoCrop><scan:Adf>
+    <scan:AdfSimplexInputCaps><scan:MaxWidth>2550</scan:MaxWidth><scan:MaxHeight>36600</scan:MaxHeight></scan:AdfSimplexInputCaps>
+    <scan:AdfDuplexInputCaps><scan:MaxWidth>2550</scan:MaxWidth><scan:MaxHeight>4200</scan:MaxHeight></scan:AdfDuplexInputCaps>
+    </scan:Adf></scan:ScannerCapabilities>
+    """.utf8)
+  static func body(of request: URLRequest) -> Data {
+    if let data = request.httpBody { return data }
+    guard let stream = request.httpBodyStream else { return Data() }
+    stream.open()
+    defer { stream.close() }
+    var data = Data()
+    var buffer = [UInt8](repeating: 0, count: 4096)
+    while stream.hasBytesAvailable {
+      let count = stream.read(&buffer, maxLength: buffer.count)
+      if count <= 0 { break }
+      data.append(contentsOf: buffer.prefix(count))
+    }
+    return data
+  }
   static func status(_ feeder: String) -> Data {
     Data("<ScannerStatus><State>Idle</State><AdfState>\(feeder)</AdfState></ScannerStatus>".utf8)
   }
@@ -199,6 +222,8 @@ final class FixtureScanner: URLProtocol {
       try await waitUntil { backend.connected }
       let beforeLong = FixtureScanner.requests.count
       precondition(backend.snapshot.capabilities.paperModes.contains(.longPaper))
+      backend.scan(options: ScanOptions(paperMode: .automatic))
+      precondition(!backend.busy && FixtureScanner.requests.count == beforeLong)
       backend.scan(options: ScanOptions(duplex: true, paperMode: .longPaper))
       precondition(!backend.busy && FixtureScanner.requests.count == beforeLong)
       precondition(backend.message.contains("one side"))
@@ -215,24 +240,41 @@ final class FixtureScanner: URLProtocol {
       try await waitUntil { !backend.busy }
       precondition(pages == 1 && outcome == true)
       let request = FixtureScanner.requests[beforeLong + 1]
-      var body = request.httpBody ?? Data()
-      if body.isEmpty, let stream = request.httpBodyStream {
-        stream.open()
-        defer { stream.close() }
-        var buffer = [UInt8](repeating: 0, count: 4096)
-        while stream.hasBytesAvailable {
-          let count = stream.read(&buffer, maxLength: buffer.count)
-          if count <= 0 { break }
-          body.append(contentsOf: buffer.prefix(count))
-        }
-      }
-      let settings = try ScanXML.read(body)
+      let settings = try ScanXML.read(body(of: request))
       precondition(settings.values["Height"] == ["21600"])
       precondition(settings.values["Duplex"] == ["false"])
       precondition(FixtureScanner.requests[beforeLong + 2].timeoutInterval == 180)
       backend.pause()
       print(
         "PASS \(connection.title) long-paper settings reach the job, receive one page, and reject duplex without a request"
+      )
+
+      FixtureScanner.replies = [(200, [:], autoCapabilities)]
+      backend.connect()
+      discovery.deliver?(endpoint)
+      try await waitUntil { backend.connected }
+      precondition(backend.snapshot.capabilities.paperModes.contains(.automatic))
+      precondition(backend.snapshot.capabilities.supportsDuplex(for: .automatic))
+      let beforeAuto = FixtureScanner.requests.count
+      backend.onCaptureBegan = { options in
+        precondition(options.paperMode == .automatic && options.duplex)
+      }
+      pages = 0
+      outcome = nil
+      FixtureScanner.replies = [
+        (200, [:], status("ScannerAdfLoaded")), (201, ["Location": jobPath], Data()),
+        (200, [:], jpeg), (200, [:], jpeg), (204, [:], Data()),
+      ]
+      backend.scan(options: ScanOptions(duplex: true, paperMode: .automatic))
+      try await waitUntil { !backend.busy }
+      let autoSettings = try ScanXML.read(body(of: FixtureScanner.requests[beforeAuto + 1]))
+      precondition(autoSettings.values["AutoCrop"] == ["true"])
+      precondition(
+        autoSettings.values["Width"] == ["2550"] && autoSettings.values["Height"] == ["4200"])
+      precondition(autoSettings.values["Duplex"] == ["true"] && pages == 2 && outcome == true)
+      backend.pause()
+      print(
+        "PASS \(connection.title) capability-gated Auto requests device cropping, stays within duplex limits, and delivers both sides"
       )
 
       FixtureScanner.replies = [

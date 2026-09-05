@@ -19,7 +19,12 @@ struct StoredPage: Codable, Identifiable, Equatable {
   var sheetID: String?
   var side: Int?
   var expectedSides: Int?
+  // Retain the original disk key so older drafts and builds remain readable.
   var blankBackSkipped: Bool?
+  var blankSkipped: Bool? {
+    get { blankBackSkipped }
+    set { blankBackSkipped = newValue }
+  }
 }
 struct IngestEnvelope: Codable {
   var id: String
@@ -151,7 +156,7 @@ final class DraftStore {
   }
 
   @discardableResult func ingest(
-    _ input: URL, dpi: Double = 300, autoCrop: Bool = false, skipBlankBacks: Bool = false
+    _ input: URL, dpi: Double = 300, autoCrop: Bool = false, skipBlanks: Bool = false
   ) throws
     -> Int
   {
@@ -186,18 +191,17 @@ final class DraftStore {
     try durableWrite(data, to: folder.appendingPathComponent("sources/\(id).image"))
     for index in pages.indices {
       pages[index].cropReviewed = true
-      let isBack = pages[index].expectedSides == 2 && pages[index].side == 1
-      if autoCrop || (skipBlankBacks && isBack) {
+      if autoCrop || skipBlanks {
         let original = try image(for: pages[index], cropped: false)
         let crop = AutoCrop.detect(original)
         if autoCrop { pages[index].crop = crop }
-        if skipBlankBacks && isBack,
+        if skipBlanks,
           BlankPageDetector.isClearlyBlank(
             crop.map { $0.width * $0.height < 0.9 ? AutoCrop.apply($0, to: original) : original }
               ?? original)
         {
           pages[index].removed = true
-          pages[index].blankBackSkipped = true
+          pages[index].blankSkipped = true
         }
       }
     }
@@ -271,13 +275,13 @@ final class DraftStore {
   func remove(_ id: String) throws {
     try update(id) {
       $0.removed = true
-      $0.blankBackSkipped = nil
+      $0.blankSkipped = nil
     }
   }
   func restore(_ id: String) throws {
     try update(id) {
       $0.removed = false
-      $0.blankBackSkipped = nil
+      $0.blankSkipped = nil
     }
   }
   private func update(_ id: String, change: (inout StoredPage) -> Void) throws {
@@ -290,13 +294,13 @@ final class DraftStore {
   func restoreLastRemoved() throws {
     try editable()
     var next = draft
-    // A user-removed front must be restored before its automatically skipped back.
+    // Explicitly removed pages take priority over automatically skipped blanks.
     guard
-      let index = next.pages.lastIndex(where: { $0.removed && $0.blankBackSkipped != true })
+      let index = next.pages.lastIndex(where: { $0.removed && $0.blankSkipped != true })
         ?? next.pages.lastIndex(where: { $0.removed })
     else { return }
     next.pages[index].removed = false
-    next.pages[index].blankBackSkipped = nil
+    next.pages[index].blankSkipped = nil
     try commit(next)
   }
   func move(_ id: String, by offset: Int) throws {

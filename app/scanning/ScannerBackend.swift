@@ -2,9 +2,15 @@ import Combine
 import Foundation
 
 enum ScanPaperMode: String, CaseIterable, Identifiable {
-  case standard, longPaper
+  case automatic, standard, longPaper
   var id: String { rawValue }
-  var title: String { self == .standard ? "Standard (A4)" : "Long paper" }
+  var title: String {
+    switch self {
+    case .automatic: return "Auto"
+    case .standard: return "A4"
+    case .longPaper: return "Long receipt"
+    }
+  }
 }
 
 struct ScanOptions: Equatable {

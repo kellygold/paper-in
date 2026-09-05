@@ -17,9 +17,11 @@ final class AppModel: ObservableObject {
   @Published var failure: String?
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
-  @Published var paperMode: ScanPaperMode = .standard
+  @Published var paperMode: ScanPaperMode = .automatic
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
-  @Published var skipBlankBacks = UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? false
+  @Published var skipBlanks =
+    UserDefaults().object(forKey: "skipBlanks") as? Bool
+    ?? UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? true
   @Published var exporting = false
   @Published var exportPending = false
   @Published var hasRemovedPages = false
@@ -28,6 +30,28 @@ final class AppModel: ObservableObject {
   private(set) var store: DraftStore?
   let demo: Bool
   let root: URL
+  var skippedPageCount: Int {
+    store?.draft.pages.filter { $0.removed && $0.blankSkipped == true }.count ?? 0
+  }
+  var canScanBothSides: Bool {
+    demo ? paperMode != .longPaper : scanner.supportsDuplex(for: paperMode)
+  }
+  var availablePaperModes: [ScanPaperMode] {
+    let modes = demo ? ScanPaperMode.allCases : scanner.paperModes
+    return modes.contains(paperMode) ? modes : [paperMode] + modes
+  }
+  func chooseSides(_ both: Bool) {
+    guard !both || canScanBothSides else { return }
+    duplex = both
+  }
+  func choosePaperMode(_ mode: ScanPaperMode) {
+    paperMode = mode
+    if (demo || scanner.connected) && !canScanBothSides { duplex = false }
+  }
+  func reconcilePaperModes() {
+    guard !demo, scanner.connected else { return }
+    if !scanner.paperModes.contains(paperMode) { choosePaperMode(.standard) }
+  }
   var canEdit: Bool { store != nil && !scanner.busy && !exporting && !exportPending }
 
   init() {
@@ -85,7 +109,7 @@ final class AppModel: ObservableObject {
         throw PaperError("Draft storage isn’t available.")
       }
       try store.ingest(
-        url, dpi: dpi, autoCrop: self.autoCrop, skipBlankBacks: self.skipBlankBacks)
+        url, dpi: dpi, autoCrop: self.autoCrop, skipBlanks: self.skipBlanks)
       self.refresh(selectLast: true)
     }
     scanner.onEnd = { [weak self] success, error in
@@ -108,13 +132,13 @@ final class AppModel: ObservableObject {
   }
   func select(_ id: String?) {
     selected = id
+    sheetPreviews = [:]
     guard let page = pages.first(where: { $0.id == id }) else {
       preview = nil
       return
     }
     do {
       preview = try store?.preview(page)
-      sheetPreviews = [:]
       for sibling in selectedSheet?.visible ?? [] {
         sheetPreviews[sibling.id] = try store?.preview(sibling)
       }

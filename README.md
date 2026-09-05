@@ -13,7 +13,7 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 - **One document, as many pages as you need.** Scan a sheet, add another, save one PDF.
 - **Front and back together.** Review each sheet, zoom either side, rotate, crop, or remove pages. Removed pages can be restored.
 - **Recoverable drafts.** Completed pages are saved as you go, including across app restarts.
-- **Optional blank-back skipping.** Hide clearly blank backs from new duplex scans, with one-click restoration before saving.
+- **Skip blank pages.** Hide clearly blank fronts or backs, including single-sided scans, with restoration before saving.
 - **Optional AI filing.** Read the saved document, suggest a name and folder, check related documents, and file clear matches. Uncertain results wait for review.
 - **Originals and Undo.** AI filing keeps the original PDF. Existing files are not overwritten, and filing can be undone.
 
@@ -47,7 +47,7 @@ The app bundle is currently about 515 MB because it contains both provider runti
 
 The destination is remembered. Saving starts a fresh document. The scanner's physical Start button is not supported yet; use the app button or Space.
 
-Enable **Skip blank backs** to leave clearly blank backs out of the preview and exported PDF. It starts off, works locally, and applies to new duplex scans only. A skipped side shows **Blank back skipped → Restore this side**; its original image remains in the draft. Fronts are always kept. Check the preview before Save PDF: faint content, scanner noise and paper backgrounds can be ambiguous, so detection deliberately keeps uncertain pages.
+Use **Options → Skip blank pages** to leave clearly blank pages out of the preview and PDF. It applies to either side and single-sided scans. New installations enable it; upgrades preserve the existing preference. Skipped pages retain their original image and can be restored before Save PDF, including when every page was blank. Existing drafts are not reclassified. Faint content, print-through and scanner noise can still require manual review.
 
 **Move earlier** and **Move later** change the selected page's order in the exported PDF. In **Single page** view, each front and back has its own sidebar row; use the arrows above the preview to move between pages.
 
@@ -112,7 +112,8 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 ## Current limits
 
 - DS-940DW only. Wi-Fi is experimental; one physical duplex scan through the shared backend is verified. Other scanner models and multi-sheet feeders are not yet supported. See [validation](docs/validation.md) for the tested scope.
-- Capture is 300 dpi, colour. Choose **Standard (A4)** or **Long paper** for receipts up to 1.8 m when the connection advertises support. Long paper scans one side at a time; close the output guide so it feeds straight through. Automatic crop keeps the PDF sized to the item. Deskew is not implemented. Long-paper hardware validation is in progress.
+- Capture is 300 dpi, colour. **Auto** requests the scanner’s advertised automatic cropping within a 35.6 cm scan area and supports both sides when advertised. **A4** uses a fixed area; **Long receipt** allows up to 1.8 m, one side at a time. Close the output guide for straight-through feeding with long paper. Device Auto and long-paper behavior are still undergoing hardware validation. Deskew is not implemented.
+- **Options → Skip blank pages** applies to either side, single-sided scans and explicit imports. Originals remain restorable before saving; an all-blank capture stays in the draft and does not create an empty PDF. Cleanup preferences carry over from earlier builds.
 - OCR feeds AI filing; PDFs do not yet receive a searchable text layer.
 - Very large exports may briefly pause the interface. Drafts and recovery copies are retained without automatic cleanup.
 - AI can misread or misclassify documents. Its second check uses the same provider, and confidence is a heuristic. Review and Undo remain available.

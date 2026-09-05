@@ -1,5 +1,12 @@
 # Release notes
 
+## 0.3.6 — 6 September 2026
+
+- Groups Paper, Sides, Options, Scan and Save in one control area. Connection and cleanup preferences live in Options; paper-size limits are explained beside the selection.
+- Adds an experimental **Auto** request using the device-advertised AutoCrop extension, gated by simplex and duplex dimensions. Requests a 2550 × 4200 scan area. Scanner acceptance and actual cropping still need hardware validation; there is no automatic retry with another setting.
+- **Skip blank pages** covers fronts, backs, single-sided scans and explicit imports. All-blank sheets remain recoverable; originals and the legacy blank-skip metadata key are preserved. Existing drafts are not reclassified.
+- Device cropping is part of the delivered source image and cannot be undone locally. A4 capture with local border trimming retains the full acquisition area.
+
 ## 0.3.5 — 6 September 2026
 
 - Adds **Paper → Long paper** for receipts up to 1.8 m, where advertised by the scanner. Selecting it turns off Both sides and shows straight-through paper-path guidance. Standard A4 duplex remains available.
