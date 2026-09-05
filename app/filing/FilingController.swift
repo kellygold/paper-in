@@ -88,7 +88,9 @@ final class FilingController: ObservableObject {
   }
   func nodeExecutable(_ configuration: FilingSettings) throws -> URL {
     let home = fm.homeDirectoryForCurrentUser.path
-    var paths = [configuration.nodePath, "/opt/homebrew/bin/node", "/usr/local/bin/node"]
+    // DMG builds include Node; explicit overrides still take precedence.
+    let bundled = Bundle.main.resourceURL?.appendingPathComponent("Runtime/bin/node").path ?? ""
+    var paths = [configuration.nodePath, bundled, "/opt/homebrew/bin/node", "/usr/local/bin/node"]
     paths += (ProcessInfo.processInfo.environment["PATH"] ?? "").split(separator: ":").map {
       String($0) + "/node"
     }

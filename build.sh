@@ -19,7 +19,13 @@ mkdir -p "$paper_app/Contents/MacOS" "$paper_app/Contents/Resources"
 xcrun swiftc "${paper_swift[@]}" app/App.swift "${paper_application[@]}" -o "$paper_app/Contents/MacOS/PaperIn"
 xcrun clang -fobjc-arc -isysroot "$paper_sdk" -mmacosx-version-min=14.0 -arch "$paper_arch" ai/ocr.m -framework Foundation -framework AppKit -framework PDFKit -framework Vision -o "$paper_app/Contents/Resources/PaperOCR"
 # Worker is a stable installed-resource name; source code lives in ai/.
-rsync -a --delete --exclude ocr.m --exclude README.md ai/ "$paper_app/Contents/Resources/Worker/"
+# Copy only application modules and dependency packages, never ignored local AI files.
+rsync -a --delete --delete-excluded --include '/providers/***' --include '/node_modules/***' --include '/*.mjs' --include '/package.json' --include '/package-lock.json' --include '/provider-catalog.json' --exclude '*' ai/ "$paper_app/Contents/Resources/Worker/"
 cp app/Info.plist "$paper_app/Contents/Info.plist"
-codesign --force --deep --sign - "$paper_app"
+xcrun swiftc "${paper_swift[@]}" scripts/make-icon.swift -o .build/make-icon
+.build/make-icon .build/AppIcon.iconset
+iconutil -c icns .build/AppIcon.iconset -o "$paper_app/Contents/Resources/AppIcon.icns"
+# Preserve upstream runtime binaries/signatures; sign our own helper and outer bundle.
+codesign --force --sign - "$paper_app/Contents/Resources/PaperOCR"
+codesign --force --sign - "$paper_app"
 echo "Built $paper_app"
