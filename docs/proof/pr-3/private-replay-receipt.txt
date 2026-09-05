@@ -1,0 +1,3 @@
+PASS private replay 1: suggestion persisted; 2 visible sides; 2 PDF pages; source bytes unchanged
+PASS private replay 2: suggestion persisted; 2 visible sides; 2 PDF pages; source bytes unchanged
+PASS private replay 3: suggestion persisted; 2 visible sides; 2 PDF pages; source bytes unchanged

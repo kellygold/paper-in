@@ -1,0 +1,51 @@
+PASS Append across restart, preserve original bytes and two-sided order
+PASS Interrupted capture survives restart
+PASS Recover page received before manifest write failure exactly once
+PASS Rotation, reordering and reversible removal survive restart
+PASS Export interrupted after publication retries without duplicate PDFs
+PASS Output failure retains pages; conflicting file is never overwritten
+PASS Organizer may move exported PDF; new document stays independent
+PASS Unreadable input is rejected without changing previous pages
+PASS Forty pages produce one complete PDF without an application page limit
+PASS Scanner image orientation is honored without altering source bytes
+PASS Duplex sheets retain pairing through removal, reordering and interrupted capture
+PASS Legacy pages remain unpaired and filing intent survives export
+PASS Starting a new capture reconciles a completed page after manifest failure
+PASS repeated device removal/addition pauses without a reconnect loop
+PASS open failure requires an explicit retry
+PASS rejection and foreign job URL do not trigger page retrieval
+PASS two separate scans produce one two-page PDF and close only owned jobs
+PASS incomplete image rejected and raw response retained
+PASS namespaced scanner status parsed
+PASS discovery confines endpoints to USB loopback or Bonjour-local hosts and plain paths
+PASS USB shared duplex capture delivers both pages and closes one owned job
+PASS USB missing back preserves the front, closes the owned job and pauses
+PASS USB ScannerAdfEmpty never begins a draft or creates a scan job
+PASS USB ScannerAdfJam never begins a draft or creates a scan job
+PASS USB rejects the wrong model and ignores callbacks from an earlier connection
+PASS Wi-Fi shared duplex capture delivers both pages and closes one owned job
+PASS Wi-Fi missing back preserves the front, closes the owned job and pauses
+PASS Wi-Fi ScannerAdfEmpty never begins a draft or creates a scan job
+PASS Wi-Fi ScannerAdfJam never begins a draft or creates a scan job
+PASS Wi-Fi rejects the wrong model and ignores callbacks from an earlier connection
+PASS card and narrow receipt crops preserve borders; full white page preserved
+PASS originals unchanged; uncrop persists across restart and migration
+PASS one PDF retains three independently sized pages
+PASS device padding and roller background removed independently
+PASS blank white paper, mild neutral noise and isolated dust specks are recognized
+PASS tiny ink, faint strokes, edge content, coloured marks and lighter-than-paper ink are retained
+PASS dark/coloured backgrounds and undersized images remain uncertain and visible
+PASS creases and print-through suggest review, retain both PDF pages, and support Keep/remove/restore
+PASS only a known duplex back is skipped; originals, pairing, restart and PDF page count remain correct
+PASS explicit restoration persists and later scans never re-hide a restored side
+PASS disabled setting, legacy/unpaired imports and simplex pages retain every image
+PASS interrupted ingestion recovers the skip decision and original side through the durable envelope
+PASS shared session forwards capabilities, options and ordered page delivery
+PASS backend reports consumer failure and shared session can pause
+PASS switching transport refuses busy capture and preserves shared draft callbacks when idle
+PASS native document workflow: paired selection, rotate/remove/restore, append, PDF save; no scanner or provider contacted
+PASS app callbacks skip a blank back, update paired previews, restore that exact side and export both pages
+PASS possible-blank capture keeps both previews, exact removal/restoration and both exported sides
+# tests 21
+# pass 21
+# fail 0

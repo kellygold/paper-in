@@ -1,0 +1,26 @@
+{
+  "candidate": "752833b2aeef85d87ba4e6908a02253ba478790d",
+  "base": "ccb7da490c986554376f0a723d916ba9a41e8875",
+  "native_scenarios": 48,
+  "worker_scenarios": 21,
+  "private_replayed_backs": 3,
+  "private_images_published": false,
+  "replay_result": "Each suggested, retained two pages in PDF, original source bytes unchanged",
+  "ui": "Candidate SwiftUI views rendered with generated fixtures and production AppModel; direct model actions, no accessibility clicks",
+  "cleanup": "Temporary replay and successful demo roots removed; failed demo fixture 82541 removed after verifying process exited",
+  "scanner_jobs_started": 0,
+  "installed_app_replaced": false,
+  "static_audit": {
+    "tracked_files": 79,
+    "local_markdown_links": 61,
+    "broken_links": 0,
+    "unexpected_scan_dependency_credential_files": 0
+  },
+  "ci": "https://github.com/kellygold/paper-in/actions/runs/33970399115",
+  "independent_review": {
+    "status": "complete",
+    "elapsed_seconds": 362.1,
+    "verdict": "No P0/P1 defects found; P2 UX/documentation concerns retained"
+  },
+  "ci_status": "passed"
+}
