@@ -89,6 +89,43 @@
   },
   "cleanup": {
     "synthetic_fixture_removed": true,
-    "installed_app_unchanged": true
+    "installed_app_unchanged": true,
+    "copied_apps_removed": true,
+    "mounted_dmg": false,
+    "download_test_copy_removed": true
+  },
+  "dmg_sha256": "b30317583133802dca190bea0c00a748bfbdf5beef40c10c69dafdcea0d20162",
+  "notarization": {
+    "app": {
+      "message": "Processing complete",
+      "id": "a01f939e-493c-4c34-a13c-87dad879ce02",
+      "status": "Accepted"
+    },
+    "dmg": {
+      "id": "cda682b6-5c96-430a-89fa-3e12dd07f442",
+      "status": "Accepted",
+      "message": "Processing complete"
+    },
+    "app_ticket_valid": true,
+    "dmg_ticket_valid": true,
+    "copied_app_gatekeeper": "accepted: Notarized Developer ID",
+    "copied_app_distribution_policy": "passed",
+    "deep_strict_signature": "passed"
+  },
+  "dependency_validation": {
+    "dependency_files_identical": 6041,
+    "node_license": true,
+    "codex_notice": true,
+    "offline_instructions_match": true
+  },
+  "final_artifact_validated_at": "2026-09-05T23:28:48.796560+00:00",
+  "hosted_download": {
+    "release_id": 383392235,
+    "draft": true,
+    "sha256": "b30317583133802dca190bea0c00a748bfbdf5beef40c10c69dafdcea0d20162",
+    "matches_local": true,
+    "ticket_valid": true,
+    "gatekeeper": "accepted: Notarized Developer ID",
+    "verified_at": "2026-09-05T23:31:06.251132+00:00"
   }
 }
