@@ -21,7 +21,9 @@ if let bundled = Bundle.main.resourceURL?.appendingPathComponent("Runtime/bin/no
   FileManager().isExecutableFile(atPath: bundled.path)
 {
   let resolved = try filing.nodeExecutable(settings)
-  precondition(resolved == bundled, "Bundled Node must be the default")
+  precondition(
+    resolved.standardizedFileURL.path == bundled.standardizedFileURL.path,
+    "Bundled Node must be the default: \(resolved.path) vs \(bundled.path)")
   var overridden = settings
   overridden.nodePath = "/usr/bin/true"
   let explicit = try filing.nodeExecutable(overridden)
