@@ -25,7 +25,7 @@ See the [release notes](docs/releases.md) for the latest changes and validation 
 
 [Get Paper In for Mac](https://kellygold.github.io/paper-in/) · [Releases and checksums](https://github.com/kellygold/paper-in/releases)
 
-The 0.4.0 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. This beta is ad-hoc signed and **not notarized**; see the [opening instructions](https://kellygold.github.io/paper-in/install.html). Other Mac architectures and scanner models are not yet verified.
+The 0.4.0 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://kellygold.github.io/paper-in/install.html). Other Mac architectures and scanner models are not yet verified.
 
 ## Build from source
 
@@ -125,4 +125,4 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 
 ## License
 
-Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). The beta download preserves vendor runtimes and notices; Developer ID signing and notarization are pending. See [distribution](docs/distribution.md).
+Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). The beta download preserves vendor runtimes and notices; the published DMG is Developer ID signed and notarized. See [distribution](docs/distribution.md).

@@ -6,7 +6,7 @@
 - Adds an app icon and a static GitHub Pages website with setup, privacy and compatibility details.
 - Packaging allowlists worker resources and preserves upstream runtime bytes and license files.
 
-This first DMG is ad-hoc signed and unnotarized. Developer ID signing and notarization are pending. Scanner behavior is unchanged from 0.3.9; Wi-Fi, long receipts, Auto cropping and blank detection retain their documented hardware limitations.
+The published DMG is Developer ID signed, notarized by Apple and includes a stapled ticket. Scanner behavior is unchanged from 0.3.9; Wi-Fi, long receipts, Auto cropping and blank detection retain their documented hardware limitations.
 
 ## 0.3.9 — 6 September 2026
 

@@ -6,14 +6,17 @@ On an Apple Silicon Mac with the normal [development prerequisites](development.
 
 ```sh
 ./test.sh
-./scripts/package-dmg.sh
+PAPER_IN_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
+PAPER_IN_NOTARY_PROFILE="paper-in" ./scripts/package-dmg.sh
 ```
 
 The script rebuilds the app, bundles the checksum-pinned official Node 22.23.2 runtime, preserves dependency licenses and vendor binaries, and creates `.build/dist/Paper-In-0.4.0-arm64.dmg` plus a SHA-256 sidecar. The disk image contains Paper In, an Applications shortcut, and offline opening instructions. It does not update an installed copy or touch drafts.
 
-The current script produces an **ad-hoc signed, unnotarized beta**. It does not use a Developer ID certificate. Do not describe this artifact as notarized. Apple Silicon and macOS 14+ are required; Intel packaging is not validated.
+The release script requires a Developer ID Application identity and a validated `notarytool` Keychain profile. It signs Paper In and its OCR helper with hardened runtime and a secure timestamp, preserving vendor signatures. It signs the DMG, submits it to Apple, requires Accepted status, staples and validates the ticket, and checks Gatekeeper before placing the DMG at its release filename. Apple Silicon and macOS 14+ are required; Intel packaging is not validated.
 
-For a notarized release, the maintainer needs an active Apple Developer Program membership, a Developer ID Application identity and notarization credentials stored outside the repository. Sign our executables with hardened runtime and a secure timestamp, preserve each vendor's redistribution/signing requirements, submit using Apple's notarization tools, and staple the accepted ticket. Validate the final downloaded DMG with Gatekeeper on a clean Mac before changing the website's installation instructions. Merely having a paid membership does not sign a build.
+Set up the profile interactively with `xcrun notarytool store-credentials paper-in`. Credentials and signing keys stay in Keychain, never in the repository. The script retains a `.unnotarized.dmg` and JSON receipt if submission fails or exceeds its 30-minute wait; this file must not be published. Use the submission ID with `notarytool info`, `wait` or `log` to investigate without resubmitting. A local developer build via `./build.sh` remains ad-hoc signed and does not need Apple membership.
+
+The maintainer needs an active Apple Developer Program membership. Validate the final downloaded DMG and copied app with Gatekeeper. A separate clean Mac is recommended for first-install testing; same-Mac checks do not establish the full clean-machine experience. Only publish the notarized installation instructions with an accepted, verified artifact.
 
 See [Apple's signing guidance](https://developer.apple.com/help/account/certificates/create-developer-id-certificates/) and [third-party notices](third-party.md).
 
