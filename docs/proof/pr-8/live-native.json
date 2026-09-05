@@ -1,0 +1,14 @@
+{
+  "candidate": "44f0f72e19e00866caac579123827f865c673aee",
+  "synthetic": true,
+  "job": "9EA49221-E78B-4B6D-B5F2-5BCA03271112",
+  "state": "undone",
+  "provider": "codex",
+  "filename": "2026-08-14 - xample Auto Workshop - Vehicle Service.pdf",
+  "sha256": "2e8c3ab3db7e70e068643feb188c754aaab64a3d1a896c5b05d493adcce75494",
+  "snapshot_matches_restored": true,
+  "filed_target_removed": true,
+  "keychain_test_removed": true,
+  "scanner_requests": 0,
+  "cleanup": "synthetic fixture tree removed"
+}

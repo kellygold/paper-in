@@ -1,0 +1,25 @@
+{
+  "candidate": "c56db47a97e77cca9729edba4fd08e604905e95c",
+  "code_candidate": "44f0f72e19e00866caac579123827f865c673aee",
+  "code_difference": "none; final commit updates validation documentation only",
+  "native_pass": 64,
+  "worker_pass": 27,
+  "total": 91,
+  "suite_exit_code": 0,
+  "source_sha256": "ed912cef59b601666b4bd017bc527ba9177998d2888a1fa552deff101288ecda",
+  "scenarios": [
+    "unavailable publishing destination: next job completes, original transaction resumes once",
+    "unavailable Undo destination: next job completes, original transaction resumes once",
+    "malformed/incomplete jobs and draft manifests: healthy jobs remain processable",
+    "damaged undiscovered export: warning, healthy jobs continue, restored export recovers",
+    "inbox symlink cleanup: Filed state and both copies preserved, safe cleanup retry",
+    "Codex inline/quoted TOML configuration: MCP disabled, command markers absent, config unchanged",
+    "legacy crop failure: recovered pages visible, healthy preview usable",
+    "paper mode round-trip: preferred Both returns, explicit One preserved",
+    "mounted settings: saved API model survives opening",
+    "page move: single-page view reveals PDF order"
+  ],
+  "synthetic_state_removed": true,
+  "scanner_requests": 0,
+  "provider_requests_during_offline_suite": 0
+}

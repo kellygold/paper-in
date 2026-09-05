@@ -1,0 +1,11 @@
+{
+  "status": "timed out",
+  "exit_code": 143,
+  "seconds": 270.4,
+  "head": "44f0f72e19e00866caac579123827f865c673aee",
+  "prior_review_seconds": 627.5,
+  "delta_only": true,
+  "verdict": null,
+  "reported_new_findings": 0,
+  "interpretation": "Incomplete; absence of reported findings is not approval. No budget reset or extra review attempt."
+}
