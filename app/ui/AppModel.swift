@@ -10,6 +10,7 @@ final class AppModel: ObservableObject {
   @Published var sheetPreviews: [String: PDFDocument] = [:]
   @Published var sheets: [SheetGroup] = []
   @Published var pairedPreview = true
+  @Published var connection: ScannerConnection
   var selectedSheet: SheetGroup? { sheets.first { $0.pages.contains { $0.id == selected } } }
   var filing: FilingController!
   @Published var notice: String?
@@ -28,6 +29,10 @@ final class AppModel: ObservableObject {
   var canEdit: Bool { store != nil && !scanner.busy && !exporting && !exportPending }
 
   init() {
+    let savedConnection =
+      ScannerConnection(rawValue: UserDefaults().string(forKey: "scannerConnection") ?? "usb")
+      ?? .usb
+    connection = savedConnection
     demo = CommandLine.arguments.contains("--demo")
     let fm = FileManager()
     if demo {
@@ -44,7 +49,8 @@ final class AppModel: ObservableObject {
       : saved.map { URL(fileURLWithPath: $0) }
         ?? fm.homeDirectoryForCurrentUser.appendingPathComponent("Documents/Scanned Documents")
     filing = FilingController(root: root, demo: demo)
-    scanner = ScannerCatalog.makeSession(staging: root.appendingPathComponent("transfers"))
+    scanner = ScannerCatalog.makeSession(
+      staging: root.appendingPathComponent("transfers"), connection: savedConnection)
     do {
       store = try DraftStore(root: root)
       if autoCrop && !demo { try store?.cropUnreviewedPages() }
@@ -117,6 +123,13 @@ final class AppModel: ObservableObject {
       try action(store)
       refresh()
     } catch { failure = error.localizedDescription }
+  }
+  func changeConnection(_ next: ScannerConnection) {
+    guard !scanner.busy else { return }
+    scanner.replaceBackend(
+      ScannerCatalog.makeBackend(
+        staging: root.appendingPathComponent("transfers"), connection: next))
+    if !demo { UserDefaults().set(next.rawValue, forKey: "scannerConnection") }
   }
   func scan() {
     guard canEdit else { return }

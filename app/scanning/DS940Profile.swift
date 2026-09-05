@@ -2,8 +2,9 @@ import Foundation
 
 /// Device-specific constraints and eSCL request format. Add another profile only
 /// after verifying its capabilities and actual image delivery on real hardware.
-struct DS940Profile {
+struct DS940Profile: ESCLScannerProfile {
   let name = "Brother DS-940DW"
+  let resolutions = [300]
   func matchesService(_ name: String) -> Bool { name.localizedCaseInsensitiveContains("DS-940") }
   func matchesCapabilities(_ caps: ScanXML) -> Bool {
     caps.values["MakeAndModel"]?.contains(where: { $0.contains("DS-940") }) == true
