@@ -1,0 +1,94 @@
+{
+  "head": "df91266aba907d7bc27d1ef716f1393938efb94e",
+  "timestamp": "2026-09-05T23:23:57.715325+00:00",
+  "native_job": {
+    "id": "85860026-6DCB-460E-B5E6-A99BCE8A097E",
+    "created": "2026-09-05T23:19:55.642Z",
+    "provider": "codex",
+    "state": "undone",
+    "folder": "Car/Servicing",
+    "original_sha256": "dc22d2f2633a0ba319e8c8a07428d2b088cfc3e811195aeb0e51cb76bfa771e5",
+    "original_restored": true,
+    "filed_target_absent": true,
+    "bundled_node_default": true,
+    "explicit_override_preserved": true,
+    "synthetic_keychain_removed": true
+  },
+  "source_delta_note": "The signed native integration exercised unchanged application code; final candidate additionally staples the application ticket before DMG packaging.",
+  "website": [
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 390,
+      "scrollWidth": 390,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 320,
+      "scrollWidth": 320,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Install Paper In",
+      "width": 320,
+      "scrollWidth": 320
+    }
+  ],
+  "offline_tests": {
+    "native": 64,
+    "worker": 27,
+    "failures": 0
+  },
+  "cleanup": {
+    "synthetic_fixture_removed": true,
+    "installed_app_unchanged": true
+  }
+}
