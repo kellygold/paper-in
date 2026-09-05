@@ -13,6 +13,7 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 - **One document, as many pages as you need.** Scan a sheet, add another, save one PDF.
 - **Front and back together.** Review each sheet, zoom either side, rotate, crop, or remove pages. Removed pages can be restored.
 - **Recoverable drafts.** Completed pages are saved as you go, including across app restarts.
+- **Optional blank-back skipping.** Hide clearly blank backs from new duplex scans, with one-click restoration before saving.
 - **Optional AI filing.** Read the saved document, suggest a name and folder, check related documents, and file clear matches. Uncertain results wait for review.
 - **Originals and Undo.** AI filing keeps the original PDF. Existing files are not overwritten, and filing can be undone.
 
@@ -43,6 +44,10 @@ The app bundle is currently about 515 MB because it contains both provider runti
 4. Review the pages and click **Save PDF** or press Command-S.
 
 The destination is remembered. Saving starts a fresh document. The scanner's physical Start button is not supported yet; use the app button or Space.
+
+Enable **Skip blank backs** to leave clearly blank backs out of the preview and exported PDF. It starts off, works locally, and applies to new duplex scans only. A skipped side shows **Blank back skipped → Restore this side**; its original image remains in the draft. Fronts are always kept. Check the preview before Save PDF: faint content, scanner noise and paper backgrounds can be ambiguous, so detection deliberately keeps uncertain pages.
+
+**Move earlier** and **Move later** change the selected page's order in the exported PDF.
 
 For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
 
