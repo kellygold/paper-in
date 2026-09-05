@@ -46,8 +46,10 @@ enum BlankPageDetector {
     for i in mask.indices {
       let offset = i * 4
       let contrast = max(
-        background[0] - Int(pixels[offset]),
-        max(background[1] - Int(pixels[offset + 1]), background[2] - Int(pixels[offset + 2])))
+        abs(background[0] - Int(pixels[offset])),
+        max(
+          abs(background[1] - Int(pixels[offset + 1])), abs(background[2] - Int(pixels[offset + 2]))
+        ))
       if contrast >= 7 {
         mask[i] = contrast >= 22 ? 2 : 1
         faintCount += 1

@@ -65,10 +65,19 @@ let (_, colouredInk) = try fixture("coloured-ink") { ctx in
   ctx.setFillColor(CGColor(red: 1, green: 1, blue: 0.7, alpha: 1))
   ctx.fill(CGRect(x: 300, y: 300, width: 30, height: 20))
 }
-for image in [printed, faint, edge, colouredInk] {
+let (_, lightInk) = try fixture("light-ink", background: CGColor(gray: 0.94, alpha: 1)) { ctx in
+  ctx.setStrokeColor(CGColor(gray: 1, alpha: 1))
+  ctx.setLineWidth(3)
+  ctx.move(to: CGPoint(x: 100, y: 400))
+  ctx.addLine(to: CGPoint(x: 300, y: 500))
+  ctx.strokePath()
+}
+for image in [printed, faint, edge, colouredInk, lightInk] {
   precondition(!BlankPageDetector.isClearlyBlank(image), "Meaningful marks were hidden")
 }
-print("PASS tiny ink, faint strokes, edge content and coloured marks are retained")
+print(
+  "PASS tiny ink, faint strokes, edge content, coloured marks and lighter-than-paper ink are retained"
+)
 
 let (_, dark) = try fixture("dark", background: CGColor(gray: 0.6, alpha: 1))
 let (_, coloured) = try fixture(
