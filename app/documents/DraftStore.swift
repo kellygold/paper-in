@@ -192,7 +192,9 @@ final class DraftStore {
         let crop = AutoCrop.detect(original)
         if autoCrop { pages[index].crop = crop }
         if skipBlankBacks && isBack,
-          BlankPageDetector.isClearlyBlank(AutoCrop.apply(crop, to: original))
+          BlankPageDetector.isClearlyBlank(
+            crop.map { $0.width * $0.height < 0.9 ? AutoCrop.apply($0, to: original) : original }
+              ?? original)
         {
           pages[index].removed = true
           pages[index].blankBackSkipped = true

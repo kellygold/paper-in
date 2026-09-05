@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.3.4 — 6 September 2026
+
+- Single-page view lists each front and back separately and adds Previous/Next navigation. Removing a back in paired view stays on the same sheet.
+- Blank-back detection tolerates supported scanner-edge artifacts and faint, extended fold shadows. It still retains uncertain content, keeps original bytes, and offers restoration. Heavy print-through may still need manual removal.
+- Auto-crop recognizes narrow scanner rims on nearly full-size sheets and cleans matching edge-connected scanner background, including around rounded card corners. Cleanup is reversible crop metadata; Full scan restores the original capture.
+
+These changes apply to new captures or explicitly reapplied auto-crops. Existing drafts and edits are retained. The local build passed 70 offline scenarios; receipt/hardware calibration remains in progress.
+
 ## 0.3.3 — 6 September 2026
 
 Removed the experimental **Possibly blank**, **Keep**, and **Remove back** prompts from local build 0.3.2. The existing page Remove control handles manual edits. **Skip blank backs** continues to hide clearly blank backs automatically, with originals retained and restoration available.

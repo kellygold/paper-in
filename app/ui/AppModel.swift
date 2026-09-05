@@ -119,11 +119,25 @@ final class AppModel: ObservableObject {
       }
     } catch { failure = error.localizedDescription }
   }
+  var selectedPageIndex: Int? { pages.firstIndex { $0.id == selected } }
+  func navigatePage(by offset: Int) {
+    guard let index = selectedPageIndex, pages.indices.contains(index + offset) else { return }
+    select(pages[index + offset].id)
+  }
   func edit(_ action: (DraftStore) throws -> Void) {
     guard canEdit, let store else { return }
+    let previousIndex = selectedPageIndex
+    let previousID = selected
+    let previousSheetID = selectedSheet?.id
     do {
       try action(store)
       refresh()
+      if let previousIndex, !pages.isEmpty, !pages.contains(where: { $0.id == previousID }) {
+        let sibling =
+          pairedPreview
+          ? sheets.first(where: { $0.id == previousSheetID })?.visible.first?.id : nil
+        select(sibling ?? pages[min(previousIndex, pages.count - 1)].id)
+      }
     } catch { failure = error.localizedDescription }
   }
   func changeConnection(_ next: ScannerConnection) {

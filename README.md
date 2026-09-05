@@ -49,7 +49,7 @@ The destination is remembered. Saving starts a fresh document. The scanner's phy
 
 Enable **Skip blank backs** to leave clearly blank backs out of the preview and exported PDF. It starts off, works locally, and applies to new duplex scans only. A skipped side shows **Blank back skipped → Restore this side**; its original image remains in the draft. Fronts are always kept. Check the preview before Save PDF: faint content, scanner noise and paper backgrounds can be ambiguous, so detection deliberately keeps uncertain pages.
 
-**Move earlier** and **Move later** change the selected page's order in the exported PDF.
+**Move earlier** and **Move later** change the selected page's order in the exported PDF. In **Single page** view, each front and back has its own sidebar row; use the arrows above the preview to move between pages.
 
 For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
 

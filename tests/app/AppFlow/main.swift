@@ -7,6 +7,15 @@ precondition(
   model.demo && model.pages.count == 2 && model.sheets.count == 1
     && model.selectedSheet?.paired == true)
 let back = model.pages[1].id
+model.pairedPreview = false
+model.select(model.pages[0].id)
+model.navigatePage(by: 1)
+precondition(model.selected == back)
+model.navigatePage(by: 1)
+precondition(model.selected == back)
+model.navigatePage(by: -1)
+precondition(model.selected == model.pages[0].id)
+model.pairedPreview = true
 model.select(back)
 precondition(model.selected == back && model.sheetPreviews.count == 2)
 model.edit {
@@ -19,6 +28,17 @@ precondition(
 model.edit { try $0.restoreLastRemoved() }
 model.scan()
 precondition(model.pages.count == 4 && model.sheets.count == 2)
+let newestBack = model.pages[3].id
+let newestFront = model.pages[2].id
+model.select(newestBack)
+model.edit { try $0.remove(newestBack) }
+precondition(model.selected == newestFront, "Removing a back jumped to an unrelated sheet")
+model.edit { try $0.restore(newestBack) }
+model.pairedPreview = false
+model.select(newestBack)
+model.navigatePage(by: -1)
+precondition(model.selected == newestFront)
+print("PASS single-page navigation reaches backs and removal stays on the current sheet")
 model.save()
 let deadline = Date().addingTimeInterval(20)
 while model.exporting && Date() < deadline {

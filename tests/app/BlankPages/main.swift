@@ -98,6 +98,28 @@ let tiny = white.cropping(to: CGRect(x: 0, y: 0, width: 40, height: 60))!
 precondition(!BlankPageDetector.isClearlyBlank(tiny))
 print("PASS dark/coloured backgrounds and undersized images remain uncertain and visible")
 
+let (_, folded) = try fixture("folded-with-rim") { ctx in
+  ctx.setFillColor(CGColor(gray: 0.7, alpha: 1))
+  ctx.fill(CGRect(x: 980, y: 0, width: 20, height: 1400))
+  ctx.fill(CGRect(x: 0, y: 1390, width: 1000, height: 10))
+  ctx.setFillColor(CGColor(gray: 0.9, alpha: 1))
+  ctx.fill(CGRect(x: 0, y: 700, width: 980, height: 2))
+}
+precondition(BlankPageDetector.isClearlyBlank(folded))
+let (_, annotatedFold) = try fixture("annotated-fold") { ctx in
+  ctx.draw(folded, in: CGRect(x: 0, y: 0, width: 1000, height: 1400))
+  ctx.setFillColor(CGColor(gray: 0.965, alpha: 1))
+  ctx.fill(CGRect(x: 300, y: 690, width: 20, height: 30))
+}
+precondition(!BlankPageDetector.isClearlyBlank(annotatedFold), "Faint writing beside a fold hidden")
+let (_, blackRule) = try fixture("black-rule-at-edge") { ctx in
+  ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+  ctx.fill(CGRect(x: 0, y: 1397, width: 1000, height: 3))
+}
+precondition(!BlankPageDetector.isClearlyBlank(blackRule), "Printed rule mistaken for scanner rim")
+print(
+  "PASS gray scanner rims and faint folds skip automatically; annotations and printed rules remain")
+
 let store = try DraftStore(root: root.appendingPathComponent("store"))
 try store.beginCapture(expectedSides: 2)
 try store.ingest(blank, skipBlankBacks: true)  // Blank front must remain.

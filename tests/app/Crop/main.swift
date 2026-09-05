@@ -88,3 +88,32 @@ expect(
   paddedImage.width >= 400 && paddedImage.width < 415 && paddedImage.height >= 250
     && paddedImage.height < 265, "Two background tones left a full-width strip or clipped the card")
 print("PASS device padding and roller background removed independently")
+
+let roundedContext = CGContext(
+  data: nil, width: 1000, height: 1400, bitsPerComponent: 8,
+  bytesPerRow: 4000, space: CGColorSpaceCreateDeviceRGB(),
+  bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
+roundedContext.setFillColor(CGColor(gray: 0.7, alpha: 1))
+roundedContext.fill(CGRect(x: 0, y: 0, width: 1000, height: 1400))
+roundedContext.setFillColor(CGColor(gray: 1, alpha: 1))
+roundedContext.addPath(
+  CGPath(
+    roundedRect: CGRect(x: 600, y: 1000, width: 380, height: 240),
+    cornerWidth: 12, cornerHeight: 12, transform: nil))
+roundedContext.fillPath()
+roundedContext.setFillColor(CGColor(red: 0, green: 0.4, blue: 0.8, alpha: 1))
+roundedContext.fill(CGRect(x: 610, y: 1130, width: 360, height: 35))
+let roundedImage = roundedContext.makeImage()!
+let roundedCrop = AutoCrop.detect(roundedImage)
+let cleaned = AutoCrop.apply(roundedCrop, to: roundedImage)
+expect(cleaned.width >= 380 && cleaned.height >= 240, "Rounded card was clipped")
+let cleanedBitmap = NSBitmapImageRep(cgImage: cleaned)
+let corner = cleanedBitmap.colorAt(x: 0, y: 0)!.usingColorSpace(.deviceRGB)!
+expect(
+  corner.redComponent > 0.95 && corner.greenComponent > 0.95,
+  "Rounded card retained a grey scanner corner")
+let cropData = try JSONEncoder().encode(roundedCrop)
+let decodedCrop = try JSONDecoder().decode(PageCrop?.self, from: cropData)
+expect(decodedCrop == roundedCrop, "Edge-cleanup metadata lost across restart")
+print(
+  "PASS rounded card corners lose scanner grey; physical size and cleanup metadata are preserved")

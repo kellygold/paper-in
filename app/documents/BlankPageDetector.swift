@@ -56,6 +56,10 @@ enum BlankPageDetector {
         if mask[i] == 2 { strongCount += 1 }
       }
     }
+    suppressScannerEdges(&mask, pixels: pixels, width: w, height: h)
+    suppressFoldLines(&mask, pixels: pixels, background: background, width: w, height: h)
+    strongCount = mask.reduce(0) { $0 + ($1 == 2 ? 1 : 0) }
+    faintCount = mask.reduce(0) { $0 + ($1 != 0 ? 1 : 0) }
     // Scattered content matters too: do not ignore sparse text or dotted marks.
     guard strongCount < 30, faintCount < 200 else { return false }
     var queue: [Int] = []
@@ -86,5 +90,122 @@ enum BlankPageDetector {
       }
     }
     return true
+  }
+
+  /// Only remove neutral edge-connected runs spanning most of an image edge.
+  /// A short mark at the edge is still content. Never trim a fixed margin.
+  private static func suppressScannerEdges(
+    _ mask: inout [UInt8], pixels: [UInt8], width w: Int, height h: Int
+  ) {
+    let original = mask
+    for vertical in [true, false] {
+      let length = vertical ? h : w
+      let depth = vertical ? w : h
+      let limit = max(1, depth / 25)
+      for far in [false, true] {
+        var runs = [Int](repeating: 0, count: length)
+        var graySupport = 0
+        for along in 0..<length {
+          var hasGray = false
+          for step in 0..<limit {
+            let across = far ? depth - 1 - step : step
+            let p = vertical ? along * w + across : across * w + along
+            let rgb = (0..<3).map { Int(pixels[p * 4 + $0]) }
+            guard original[p] != 0, rgb.max()! - rgb.min()! <= 32 else { break }
+            if rgb.min()! >= 45 && rgb.max()! <= 230 { hasGray = true }
+            runs[along] = step + 1
+          }
+          if hasGray { graySupport += 1 }
+        }
+        // An actual scanner edge is almost continuous over the sheet dimension.
+        guard runs.filter({ $0 > 0 }).count >= length * 3 / 4, graySupport >= length / 2 else {
+          continue
+        }
+        let smoothed = (0..<length).map { i -> Int in
+          let neighbors = Array(runs[max(0, i - 3)...min(length - 1, i + 3)]).sorted()
+          return neighbors[neighbors.count / 2]
+        }
+        for along in 0..<length {
+          let run = smoothed[along] > 0 ? min(limit, smoothed[along] + 1) : 0
+          for step in 0..<run {
+            let across = far ? depth - 1 - step : step
+            let p = vertical ? along * w + across : across * w + along
+            mask[p] = 0
+          }
+        }
+      }
+    }
+  }
+
+  /// A faint crease forms a very thin, near-horizontal/vertical band across the
+  /// sheet. Require broad support and cap both thickness and contrast so text,
+  /// short handwriting and printed rules remain content.
+  private static func suppressFoldLines(
+    _ mask: inout [UInt8], pixels: [UInt8], background: [Int], width w: Int, height h: Int
+  ) {
+    for vertical in [false, true] {
+      let length = vertical ? h : w
+      let depth = vertical ? w : h
+      let radius = max(3, depth / 100)
+      var counts = [Int](repeating: 0, count: depth)
+      for across in 0..<depth {
+        for along in 0..<length {
+          let p = vertical ? along * w + across : across * w + along
+          if mask[p] != 0 { counts[across] += 1 }
+        }
+      }
+      var candidates: [Int] = []
+      for center in radius..<(depth - radius) where counts[center] > 0 {
+        let sum = counts[(center - radius)...(center + radius)].reduce(0, +)
+        if sum >= length / 2 { candidates.append(center) }
+      }
+      // A handful of folds is plausible; a page of ruled lines is content.
+      var bands: [ClosedRange<Int>] = []
+      for center in candidates {
+        let band = (center - radius)...(center + radius)
+        if let last = bands.last, band.lowerBound <= last.upperBound {
+          bands[bands.count - 1] = last.lowerBound...max(last.upperBound, band.upperBound)
+        } else {
+          bands.append(band)
+        }
+      }
+      guard bands.count <= 3 else { continue }
+      for band in bands {
+        guard band.count <= radius * 5 + 1 else { continue }
+        var support = 0
+        var total = 0
+        var contrastSum = 0
+        var peak = 0
+        var thickColumns = 0
+        var veryThickColumns = 0
+        var members: [Int] = []
+        var colored = 0
+        for along in 0..<length {
+          var occupied: [Int] = []
+          for across in band {
+            let p = vertical ? along * w + across : across * w + along
+            guard mask[p] != 0 else { continue }
+            let rgb = (0..<3).map { Int(pixels[p * 4 + $0]) }
+            if rgb.max()! - rgb.min()! > 32 { colored += 1 }
+            let contrast = (0..<3).map { abs(background[$0] - rgb[$0]) }.max()!
+            peak = max(peak, contrast)
+            contrastSum += contrast
+            total += 1
+            occupied.append(across)
+            members.append(p)
+          }
+          if let first = occupied.first, let last = occupied.last {
+            support += 1
+            if last - first + 1 > max(12, depth / 80) { veryThickColumns += 1 }
+            if last - first + 1 > max(5, depth / 200) { thickColumns += 1 }
+          }
+        }
+        guard colored <= 3, support >= length * 9 / 20, total > 0,
+          peak <= 120, contrastSum / total <= 40,
+          thickColumns <= length / 20, veryThickColumns <= max(3, length / 80)
+        else { continue }
+        for p in members { mask[p] = 0 }
+      }
+    }
   }
 }

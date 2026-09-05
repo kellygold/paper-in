@@ -44,32 +44,56 @@ struct ContentView: View {
           }
           ScrollView {
             LazyVStack(spacing: 9) {
-              ForEach(Array(model.sheets.enumerated()), id: \.element.id) { index, sheet in
-                Button {
-                  model.select(sheet.visible.first?.id)
-                } label: {
-                  HStack(spacing: 8) {
-                    ForEach(sheet.visible.prefix(2)) { page in
+              if model.pairedPreview {
+                ForEach(Array(model.sheets.enumerated()), id: \.element.id) { index, sheet in
+                  Button {
+                    model.select(sheet.visible.first?.id)
+                  } label: {
+                    HStack(spacing: 8) {
+                      ForEach(sheet.visible.prefix(2)) { page in
+                        PageThumbnail(store: model.store, page: page).id(
+                          page.id + String(page.rotation) + String(describing: page.crop))
+                      }
+                      VStack(alignment: .leading, spacing: 3) {
+                        Text(
+                          sheet.pages.first?.sheetID == nil
+                            ? "Page \(index + 1)" : "Sheet \(index + 1)"
+                        ).font(.system(size: 13, weight: .medium))
+                        Text(
+                          sheet.pages.contains(where: { $0.blankBackSkipped == true })
+                            ? "Blank back skipped" : (sheet.paired ? "Front + back" : "One side")
+                        ).font(.system(size: 10))
+                          .foregroundStyle(.secondary)
+                      }
+                      Spacer()
+                    }.padding(10).background(
+                      model.selectedSheet?.id == sheet.id ? green.opacity(0.09) : Color.white
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                  }.buttonStyle(.plain)
+                }
+              } else {
+                ForEach(Array(model.pages.enumerated()), id: \.element.id) { index, page in
+                  Button {
+                    model.select(page.id)
+                  } label: {
+                    HStack(spacing: 10) {
                       PageThumbnail(store: model.store, page: page).id(
                         page.id + String(page.rotation) + String(describing: page.crop))
-                    }
-                    VStack(alignment: .leading, spacing: 3) {
-                      Text(
-                        sheet.pages.first?.sheetID == nil
-                          ? "Page \(index + 1)" : "Sheet \(index + 1)"
-                      ).font(.system(size: 13, weight: .medium))
-                      Text(
-                        sheet.pages.contains(where: { $0.blankBackSkipped == true })
-                          ? "Blank back skipped" : (sheet.paired ? "Front + back" : "One side")
-                      ).font(.system(size: 10))
-                        .foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                  }.padding(10).background(
-                    model.selectedSheet?.id == sheet.id ? green.opacity(0.09) : Color.white
-                  )
-                  .clipShape(RoundedRectangle(cornerRadius: 8))
-                }.buttonStyle(.plain)
+                      VStack(alignment: .leading, spacing: 3) {
+                        Text("Page \(index + 1)").font(.system(size: 13, weight: .medium))
+                        if page.expectedSides == 2 {
+                          Text(page.side == 1 ? "Back" : "Front").font(.caption).foregroundStyle(
+                            .secondary)
+                        }
+                      }
+                      Spacer()
+                    }.padding(10).background(
+                      model.selected == page.id ? green.opacity(0.09) : Color.white
+                    )
+                    .clipShape(RoundedRectangle(cornerRadius: 8))
+                  }.buttonStyle(.plain)
+                }
               }
             }
           }
@@ -96,7 +120,22 @@ struct ContentView: View {
             }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.white)
           } else {
             HStack {
-              Text("Preview").font(.caption).foregroundStyle(.secondary)
+              Button {
+                model.navigatePage(by: -1)
+              } label: {
+                Image(systemName: "chevron.left")
+              }.help("Previous page")
+                .accessibilityLabel("Previous page")
+                .disabled((model.selectedPageIndex ?? 0) == 0)
+              Text("Page \((model.selectedPageIndex ?? 0) + 1) of \(model.pages.count)")
+                .font(.caption).foregroundStyle(.secondary)
+              Button {
+                model.navigatePage(by: 1)
+              } label: {
+                Image(systemName: "chevron.right")
+              }.help("Next page")
+                .accessibilityLabel("Next page")
+                .disabled((model.selectedPageIndex ?? 0) >= model.pages.count - 1)
               Spacer()
               Picker("Layout", selection: $model.pairedPreview) {
                 Text("Front + back").tag(true)
@@ -113,12 +152,12 @@ struct ContentView: View {
                 if let id = model.selected { model.edit { try $0.move(id, by: -1) } }
               } label: {
                 Label("Move earlier", systemImage: "arrow.up")
-              }
+              }.disabled((model.selectedPageIndex ?? 0) == 0)
               Button {
                 if let id = model.selected { model.edit { try $0.move(id, by: 1) } }
               } label: {
                 Label("Move later", systemImage: "arrow.down")
-              }
+              }.disabled((model.selectedPageIndex ?? 0) >= model.pages.count - 1)
               Button {
                 if let id = model.selected, let page = model.pages.first(where: { $0.id == id }) {
                   model.edit { try $0.setAutoCrop(id, enabled: page.crop == nil) }
