@@ -4,11 +4,15 @@ import Foundation
 /// Conservative, local blank-paper detection. Uncertain images are kept.
 /// The caller retains original bytes and makes skipping a reversible draft edit.
 enum BlankPageDetector {
-  static func isClearlyBlank(_ image: CGImage) -> Bool {
+  enum Assessment { case blank, possibleBlank, content }
+
+  static func isClearlyBlank(_ image: CGImage) -> Bool { assess(image) == .blank }
+
+  static func assess(_ image: CGImage) -> Assessment {
     let scale = min(1, 1600.0 / Double(max(image.width, image.height)))
     let w = Int(Double(image.width) * scale)
     let h = Int(Double(image.height) * scale)
-    guard w >= 100, h >= 100 else { return false }
+    guard w >= 100, h >= 100 else { return .content }
     var pixels = [UInt8](repeating: 255, count: w * h * 4)
     let rendered = pixels.withUnsafeMutableBytes { bytes -> Bool in
       guard
@@ -23,7 +27,7 @@ enum BlankPageDetector {
       ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
       return true
     }
-    guard rendered else { return false }
+    guard rendered else { return .content }
     var histograms = Array(repeating: [Int](repeating: 0, count: 256), count: 3)
     for i in 0..<(w * h) {
       for channel in 0..<3 { histograms[channel][Int(pixels[i * 4 + channel])] += 1 }
@@ -38,11 +42,14 @@ enum BlankPageDetector {
     }
     // Dark/coloured paper and uncertain exposure aren't treated as blank.
     guard background.min()! >= 225, background.max()! - background.min()! <= 12 else {
-      return false
+      return .content
     }
     var mask = [UInt8](repeating: 0, count: w * h)
     var strongCount = 0
     var faintCount = 0
+    var interiorCount = 0
+    var interiorFaint = 0
+    var interiorStrong = 0
     for i in mask.indices {
       let offset = i * 4
       let contrast = max(
@@ -50,14 +57,25 @@ enum BlankPageDetector {
         max(
           abs(background[1] - Int(pixels[offset + 1])), abs(background[2] - Int(pixels[offset + 2]))
         ))
+      // The inset is used ONLY for a review suggestion. Automatic skipping still
+      // checks every pixel, including small marks beside the physical paper edge.
+      let x = i % w, y = i / w
+      if x >= w / 25 && x < w - w / 25 && y >= h / 25 && y < h - h / 25 {
+        interiorCount += 1
+        if contrast >= 7 { interiorFaint += 1 }
+        if contrast >= 22 { interiorStrong += 1 }
+      }
       if contrast >= 7 {
         mask[i] = contrast >= 22 ? 2 : 1
         faintCount += 1
         if mask[i] == 2 { strongCount += 1 }
       }
     }
+    let fallback: Assessment =
+      interiorCount > 0 && Double(interiorStrong) / Double(interiorCount) < 0.003
+      && Double(interiorFaint) / Double(interiorCount) < 0.06 ? .possibleBlank : .content
     // Scattered content matters too: do not ignore sparse text or dotted marks.
-    guard strongCount < 30, faintCount < 200 else { return false }
+    guard strongCount < 30, faintCount < 200 else { return fallback }
     var queue: [Int] = []
     for seed in mask.indices where mask[seed] != 0 {
       queue = [seed]
@@ -82,9 +100,9 @@ enum BlankPageDetector {
           }
         }
         // Connected dark ink or faint strokes override the blank decision.
-        if strong >= 5 || queue.count >= 24 { return false }
+        if strong >= 5 || queue.count >= 24 { return fallback }
       }
     }
-    return true
+    return .blank
   }
 }

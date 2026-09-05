@@ -20,6 +20,7 @@ struct StoredPage: Codable, Identifiable, Equatable {
   var side: Int?
   var expectedSides: Int?
   var blankBackSkipped: Bool?
+  var possibleBlankBack: Bool?
 }
 struct IngestEnvelope: Codable {
   var id: String
@@ -191,11 +192,16 @@ final class DraftStore {
         let original = try image(for: pages[index], cropped: false)
         let crop = AutoCrop.detect(original)
         if autoCrop { pages[index].crop = crop }
-        if skipBlankBacks && isBack,
-          BlankPageDetector.isClearlyBlank(AutoCrop.apply(crop, to: original))
-        {
-          pages[index].removed = true
-          pages[index].blankBackSkipped = true
+        if skipBlankBacks && isBack {
+          switch BlankPageDetector.assess(AutoCrop.apply(crop, to: original)) {
+          case .blank:
+            pages[index].removed = true
+            pages[index].blankBackSkipped = true
+          case .possibleBlank:
+            pages[index].possibleBlankBack = true
+          case .content:
+            break
+          }
         }
       }
     }
@@ -270,12 +276,14 @@ final class DraftStore {
     try update(id) {
       $0.removed = true
       $0.blankBackSkipped = nil
+      $0.possibleBlankBack = nil
     }
   }
   func restore(_ id: String) throws {
     try update(id) {
       $0.removed = false
       $0.blankBackSkipped = nil
+      $0.possibleBlankBack = nil
     }
   }
   private func update(_ id: String, change: (inout StoredPage) -> Void) throws {

@@ -55,7 +55,36 @@ while model.exporting && Date() < blankDeadline {
 }
 precondition(!model.exporting && model.pages.isEmpty && model.failure == nil)
 precondition(PDFDocument(url: model.lastExport!)?.pageCount == 2)
-try FileManager().removeItem(at: model.root)
 print(
   "PASS app callbacks skip a blank back, update paired previews, restore that exact side and export both pages"
 )
+
+// A crease-like mark triggers a suggestion, which must never remove a PDF page.
+for x in 0..<400 {
+  for y in 299...300 {
+    let offset = y * bitmap.bytesPerRow + x * 3
+    for c in 0..<3 { bitmap.bitmapData![offset + c] = 240 }
+  }
+}
+let creased = model.root.appendingPathComponent("creased-back.png")
+try bitmap.representation(using: .png, properties: [:])!.write(to: creased)
+try model.scanner.onBegin?(ScanOptions(duplex: true))
+try model.scanner.onPage?(blank, 300)
+try model.scanner.onPage?(creased, 300)
+model.scanner.onEnd?(true, nil)
+let possible = model.selectedSheet!.page(side: 1)!
+precondition(possible.possibleBlankBack == true && !possible.removed)
+precondition(model.pages.count == 2 && model.sheetPreviews.count == 2)
+model.edit { try $0.remove(possible.id) }
+precondition(model.pages.count == 1 && model.sheetPreviews.count == 1)
+model.edit { try $0.restore(possible.id) }
+precondition(model.pages.count == 2 && model.selectedSheet!.page(side: 1)!.possibleBlankBack == nil)
+model.save()
+let possibleDeadline = Date().addingTimeInterval(20)
+while model.exporting && Date() < possibleDeadline {
+  RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+}
+precondition(!model.exporting && model.failure == nil)
+precondition(PDFDocument(url: model.lastExport!)?.pageCount == 2)
+try FileManager().removeItem(at: model.root)
+print("PASS possible-blank capture keeps both previews, exact removal/restoration and both exported sides")
