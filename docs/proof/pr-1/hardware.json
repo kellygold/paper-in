@@ -1,0 +1,79 @@
+{
+  "candidate": "ccfe416295929c804dd27c9a8f5b9413f184124b",
+  "date": "2026-09-05",
+  "target": "DS-940DW on a local Wi-Fi network; unique device identifiers omitted",
+  "scope": "User explicitly authorized one loaded-sheet capture; no content or images in this receipt",
+  "entrypoint": "Isolated native harness composed from production ESCLScannerBackend, DS940Profile, DraftStore, AutoCrop and PDF exporter",
+  "candidate_delta_since_capture": "Only feeder error wording and additional jam tests changed; successful capture path unchanged",
+  "events": [
+    {
+      "elapsed_ms": 4,
+      "event": "app_started",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "connection": "network",
+      "elapsed_ms": 5,
+      "event": "discovery_started",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "connection": "network",
+      "elapsed_ms": 7,
+      "event": "service_resolved",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "connection": "network",
+      "elapsed_ms": 164,
+      "event": "scanner_connected",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "elapsed_ms": 268,
+      "event": "scanner_status",
+      "feeder": "ScannerAdfLoaded",
+      "state": "Idle",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "dpi": 300,
+      "duplex": true,
+      "elapsed_ms": 270,
+      "event": "scan_requested",
+      "time": "2026-09-05T12:42:28Z"
+    },
+    {
+      "elapsed_ms": 1412,
+      "event": "scan_accepted",
+      "http_status": 201,
+      "time": "2026-09-05T12:42:30Z"
+    },
+    {
+      "elapsed_ms": 18906,
+      "event": "page_saved",
+      "received_files": 1,
+      "time": "2026-09-05T12:42:47Z"
+    },
+    {
+      "elapsed_ms": 38262,
+      "event": "page_saved",
+      "received_files": 2,
+      "time": "2026-09-05T12:43:06Z"
+    }
+  ],
+  "assertions": {
+    "received_images": 2,
+    "saved_pdf_pages": 2,
+    "capture_attempts": 1,
+    "appended_to_existing_user_draft": false,
+    "ai_provider_calls": 0
+  },
+  "cleanup": "User-requested PDF and recoverable source bytes retained locally. Harness exited. No scanner settings, network routes, user draft or AI queue changed.",
+  "unvalidated": [
+    "Main-window physical capture at candidate SHA",
+    "USB physical recapture",
+    "Single-sided network capture",
+    "Sleep/wake and disconnect recovery"
+  ]
+}

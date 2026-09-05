@@ -1,0 +1,33 @@
+{
+  "candidate": "ccfe416295929c804dd27c9a8f5b9413f184124b",
+  "normal_app_bundle_version": "0.3.0",
+  "isolated_home_verified": true,
+  "transport_argument": "network",
+  "startup_action": "--connect",
+  "result": "Discovery timed out; separate curl DNS resolution and CLI discovery also failed",
+  "test_draft_pages": 0,
+  "scan_requests": 0,
+  "ai_requests": 0,
+  "last_loaded_sheet_consumed": false,
+  "cleanup": "Isolated app exited and empty test home removed; user application data was never substituted or modified by this check",
+  "events": [
+    {
+      "elapsed_ms": 0,
+      "event": "app_started",
+      "macOS": "Version 26.3.1 (Build 25D2128)",
+      "time": "2026-09-05T12:49:57Z",
+      "version": "0.3.0"
+    },
+    {
+      "elapsed_ms": 86,
+      "event": "window_opened",
+      "time": "2026-09-05T12:49:57Z"
+    },
+    {
+      "connection": "network",
+      "elapsed_ms": 86,
+      "event": "discovery_started",
+      "time": "2026-09-05T12:49:57Z"
+    }
+  ]
+}

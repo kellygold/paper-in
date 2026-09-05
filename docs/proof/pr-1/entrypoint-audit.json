@@ -1,0 +1,14 @@
+{
+  "utc": "2026-09-05T12:46:57.390237+00:00",
+  "head": "ccfe416295929c804dd27c9a8f5b9413f184124b",
+  "supplemental_redacted_findings": [],
+  "package_lock_dependency_match": true,
+  "package_lock_version_match": true,
+  "app_version": "0.3.0",
+  "worker_version": "0.2.0",
+  "shell_syntax": "bash -n build.sh test.sh scripts/*.sh passed",
+  "plist_lint": "plutil -lint app/Info.plist passed",
+  "diff_whitespace": "git diff --check base..HEAD passed",
+  "screenshot_review": "Only generated Paper In sample pages, no personal document content; temporary demo output path visible",
+  "clean_tree": true
+}

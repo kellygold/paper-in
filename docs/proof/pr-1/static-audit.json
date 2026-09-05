@@ -1,0 +1,20 @@
+{
+  "utc": "2026-09-05T12:46:31.243017+00:00",
+  "head": "ccfe416295929c804dd27c9a8f5b9413f184124b",
+  "status": "",
+  "files": 76,
+  "history_blobs": 123,
+  "history_bytes": 879334,
+  "redacted_pattern_findings": [],
+  "local_markdown_links": 53,
+  "broken_links": [],
+  "tracked_binary_files": [
+    {
+      "path": "docs/images/paired-preview.png",
+      "bytes": 257199
+    }
+  ],
+  "tracked_over_1mb": [],
+  "suspect_artifact_paths": [],
+  "diff_stat": "20 files changed, 614 insertions(+), 110 deletions(-)"
+}
