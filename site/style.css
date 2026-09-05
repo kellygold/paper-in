@@ -407,7 +407,7 @@ h2 {
 .step-number {
   font: 10px monospace;
   letter-spacing: 1.5px;
-  color: #7a896f;
+  color: var(--muted);
 }
 h3 {
   font: normal 26px/1.2 var(--serif);
@@ -473,7 +473,7 @@ h3 {
 }
 .local-label {
   font: 8px monospace;
-  color: #778771;
+  color: var(--muted);
   margin-left: auto;
   letter-spacing: 0.7px;
 }
