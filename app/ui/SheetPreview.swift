@@ -26,14 +26,6 @@ struct SheetPreview: View {
         }
       }.padding(12).background(model.selected == page?.id ? Color.green.opacity(0.09) : Color.white)
       if let page, !page.removed {
-        if page.possibleBlankBack == true {
-          HStack {
-            Text("Possibly blank—check before removing").font(.caption)
-            Spacer()
-            Button("Keep") { model.edit { try $0.restore(page.id) } }
-            Button("Remove back") { model.edit { try $0.remove(page.id) } }
-          }.padding(10).background(Color.yellow.opacity(0.12)).disabled(!model.canEdit)
-        }
         PagePreview(document: model.sheetPreviews[page.id])
       } else {
         VStack(spacing: 12) {

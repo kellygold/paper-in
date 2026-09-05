@@ -1,10 +1,10 @@
 # Release notes
 
-## 0.3.2 — 5 September 2026
+## 0.3.3 — 6 September 2026
 
-Near-blank backs now offer **Keep** and **Remove back** in the paired preview. Scanner borders, folds, and faint print-through can resemble ink to the conservative detector; these suggestions stay visible and remain in exported PDFs until explicitly removed. Clearly blank backs still skip automatically, with originals retained. The setting applies to new duplex scans only.
+Removed the experimental **Possibly blank**, **Keep**, and **Remove back** prompts from local build 0.3.2. The existing page Remove control handles manual edits. **Skip blank backs** continues to hide clearly blank backs automatically, with originals retained and restoration available.
 
-Three locally replayed scanner backs with paper-edge shadows, folds, or print-through now produce review suggestions. Those private images are not repository fixtures. Automated fixtures cover the same classes of marks, persistence, PDF inclusion, explicit removal and restoration. Automatic skipping remains conservative; this change does not automatically discard these ambiguous backs.
+Automatic detection remains conservative: scanner borders, print-through and creases can still cause blank backs to be kept. This update removes the redundant prompts; it does not make detection more aggressive. Existing 0.3.2 drafts retain their pages and edits; obsolete suggestion metadata is ignored.
 
 ## 0.3.1 — 5 September 2026
 

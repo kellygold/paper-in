@@ -19,7 +19,7 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 
 Scanning works without an AI account. AI filing is off by default.
 
-See the [release notes](docs/releases.md) for the latest changes and validation limits.
+See the [0.3.1 release notes](docs/releases.md) for the latest changes and validation limits.
 
 ## Get it running
 
@@ -50,8 +50,6 @@ The destination is remembered. Saving starts a fresh document. The scanner's phy
 Enable **Skip blank backs** to leave clearly blank backs out of the preview and exported PDF. It starts off, works locally, and applies to new duplex scans only. A skipped side shows **Blank back skipped → Restore this side**; its original image remains in the draft. Fronts are always kept. Check the preview before Save PDF: faint content, scanner noise and paper backgrounds can be ambiguous, so detection deliberately keeps uncertain pages.
 
 **Move earlier** and **Move later** change the selected page's order in the exported PDF.
-
-Folds, scanner borders, and print-through can prevent automatic blank detection. Near-blank backs show **Possibly blank** in the paired preview: choose **Remove back** or **Keep**. Suggestions stay in the PDF unless you remove them. This also applies only to new scans with blank-back skipping enabled.
 
 For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
 

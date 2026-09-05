@@ -98,51 +98,6 @@ let tiny = white.cropping(to: CGRect(x: 0, y: 0, width: 40, height: 60))!
 precondition(!BlankPageDetector.isClearlyBlank(tiny))
 print("PASS dark/coloured backgrounds and undersized images remain uncertain and visible")
 
-let (creasedURL, creased) = try fixture("creased", width: 2480, height: 3508) { ctx in
-  ctx.setFillColor(CGColor(gray: 0.6, alpha: 1))
-  ctx.fill(CGRect(x: 2430, y: 0, width: 50, height: 3508))
-  ctx.setFillColor(CGColor(gray: 0.85, alpha: 1))
-  ctx.fill(CGRect(x: 0, y: 1200, width: 2430, height: 3))
-}
-let (_, showThrough) = try fixture("show-through") { ctx in
-  ctx.setFillColor(CGColor(gray: 0.96, alpha: 1))
-  for y in stride(from: 100, to: 1000, by: 60) {
-    for x in stride(from: 100, to: 800, by: 15) {
-      ctx.fill(CGRect(x: x, y: y, width: 3, height: 7))
-    }
-  }
-}
-let (_, dense) = try fixture("dense") { ctx in
-  ctx.setFillColor(CGColor(gray: 0, alpha: 1))
-  ctx.fill(CGRect(x: 100, y: 100, width: 800, height: 400))
-}
-precondition(BlankPageDetector.assess(creased) == .possibleBlank)
-precondition(BlankPageDetector.assess(showThrough) == .possibleBlank)
-precondition(BlankPageDetector.assess(dense) == .content)
-let suggestions = try DraftStore(root: root.appendingPathComponent("suggestions"))
-try suggestions.beginCapture(expectedSides: 2)
-try suggestions.ingest(creasedURL, skipBlankBacks: true)
-try suggestions.ingest(creasedURL, skipBlankBacks: true)
-try suggestions.completeCapture(success: true)
-precondition(suggestions.draft.pages[0].possibleBlankBack == nil)
-let suggestedID = suggestions.draft.pages[1].id
-precondition(suggestions.draft.pages[1].possibleBlankBack == true)
-let suggestedReload = try DraftStore(root: suggestions.root)
-precondition(suggestedReload.visiblePages.count == 2)
-precondition(suggestedReload.draft.pages[1].possibleBlankBack == true)
-let exportCopyRoot = root.appendingPathComponent("suggested-export-copy")
-try fm.copyItem(at: suggestions.root, to: exportCopyRoot)
-let exportCopy = try DraftStore(root: exportCopyRoot)
-let suggestedPDF = try exportCopy.export(to: root.appendingPathComponent("suggested-output"))
-precondition(PDFDocument(url: suggestedPDF)?.pageCount == 2, "Suggestions must never hide a side")
-try suggestions.restore(suggestedID) // Keep dismisses the suggestion without hiding the image.
-precondition(suggestions.visiblePages.count == 2 && suggestions.draft.pages[1].possibleBlankBack == nil)
-try suggestions.remove(suggestedID)
-precondition(suggestions.visiblePages.count == 1)
-try suggestions.restore(suggestedID)
-precondition(suggestions.visiblePages.count == 2 && suggestions.draft.pages[1].possibleBlankBack == nil)
-print("PASS creases and print-through suggest review, retain both PDF pages, and support Keep/remove/restore")
-
 let store = try DraftStore(root: root.appendingPathComponent("store"))
 try store.beginCapture(expectedSides: 2)
 try store.ingest(blank, skipBlankBacks: true)  // Blank front must remain.

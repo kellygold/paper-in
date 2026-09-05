@@ -60,9 +60,7 @@ struct ContentView: View {
                       ).font(.system(size: 13, weight: .medium))
                       Text(
                         sheet.pages.contains(where: { $0.blankBackSkipped == true })
-                          ? "Blank back skipped"
-                          : (sheet.pages.contains(where: { $0.possibleBlankBack == true && !$0.removed })
-                            ? "Possibly blank back" : (sheet.paired ? "Front + back" : "One side"))
+                          ? "Blank back skipped" : (sheet.paired ? "Front + back" : "One side")
                       ).font(.system(size: 10))
                         .foregroundStyle(.secondary)
                     }
