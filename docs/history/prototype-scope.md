@@ -1,6 +1,6 @@
 # Paper In — original prototype scope
 
-Status: historical. Current behavior is documented in README.md and docs/architecture.md.
+Status: historical. Current behavior is documented in [the README](../../README.md) and [architecture](../architecture.md).
 
 Scoped 5 September 2026. Target: Kelly's Brother DS-940DW over USB on macOS. This is the build specification. Implementation has started; see README.md for tested behavior and outstanding hardware checks. No scanner connection or settings were accessed during this scoping work.
 

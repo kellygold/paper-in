@@ -23,25 +23,27 @@ flowchart TD
   Review --> Files[Confined, journaled publication / Undo]
 ```
 
+Start with [the project map](project-map.md) for a task-by-task guide to the files.
+
 ## Code map
 
-- `Sources/Scanning/ScannerBackend.swift`: hardware-independent options, capabilities, delivered images and backend contract; shared observable session. The UI depends on the session, not a device implementation.
-- `Sources/Scanning/ScannerCatalog.swift`: supported hardware composition. `DS940Profile` holds model-specific matching and request constraints; `DS940USBBackend` owns discovery/job lifecycle; `ESCLClient` owns generic HTTP/XML transport validation.
-- `Sources/Storage/DraftStore.swift`: durable originals, draft manifest, capture IDs/sides, reversible edits and PDF publication. Sheet pairing is preserved even if a side is removed or capture fails. Legacy pages are not inferred into pairs.
-- `Sources/Preview`: shared page rendering, zoom and sheet grouping; `Sources/UI`: application state and layout.
-- `Sources/Filing`: native settings, catalog reader, Keychain access, worker lifecycle and queue/review UI.
-- `Worker/provider-catalog.json`: shared provider descriptors for the native UI and worker. A model is configuration, not a separate workflow.
-- `Worker/providers/registry.mjs`: provider implementations; adapters receive prompt, schema, settings, cancellation signal, credentials and an isolated runtime working directory. They return a proposal object. They do not move files or receive original PDF paths.
-- `Worker/schema.mjs`: proposal validation and shared prompts. The engine makes a first proposal and a second evidence check; the review policy is independent of provider choice.
-- `Worker/engine.mjs`: durable job state transitions, export discovery, bounded indexing, classification and approval. `files.mjs` owns confined paths and no-clobber publication. `library.mjs` owns local OCR and candidate retrieval.
-- `Helpers/ocr.m`: Objective-C Vision/PDFKit helper, keeping OCR local and avoiding a Swift/SDK module mismatch. Existing PDF text is used when present; otherwise each page is rendered and OCRed.
+- `app/scanning/ScannerBackend.swift`: hardware-independent options, capabilities, delivered images and backend contract; shared observable session. The UI depends on the session, not a device implementation.
+- `app/scanning/ScannerCatalog.swift`: supported hardware composition. `DS940Profile` holds model-specific matching and request constraints; `DS940USBBackend` owns discovery/job lifecycle; `ESCLClient` owns generic HTTP/XML transport validation.
+- `app/documents/DraftStore.swift`: durable originals, draft manifest, capture IDs/sides, reversible edits and PDF publication. Sheet pairing is preserved even if a side is removed or capture fails. Legacy pages are not inferred into pairs.
+- `app/ui`: application state, window layout, shared page rendering and zoom. `app/documents/SheetGroup.swift` owns physical-sheet grouping.
+- `app/filing`: native settings, catalog reader, Keychain access, worker lifecycle and queue/review UI.
+- `ai/provider-catalog.json`: shared provider descriptors for the native UI and worker. A model is configuration, not a separate workflow.
+- `ai/providers/registry.mjs`: provider implementations; adapters receive prompt, schema, settings, cancellation signal, credentials and an isolated runtime working directory. They return a proposal object. They do not move files or receive original PDF paths.
+- `ai/schema.mjs`: proposal validation and shared prompts. The engine makes a first proposal and a second evidence check; the review policy is independent of provider choice.
+- `ai/engine.mjs`: durable job state transitions, export discovery, bounded indexing, classification and approval. `files.mjs` owns confined paths and no-clobber publication. `library.mjs` owns local OCR and candidate retrieval.
+- `ai/ocr.m`: Objective-C Vision/PDFKit helper, keeping OCR local and avoiding a Swift/SDK module mismatch. Existing PDF text is used when present; otherwise each page is rendered and OCRed.
 
 Swift controls the UX and scanning. The worker owns AI and filing transactions, with one process lock per application-data root. They exchange a JSON request over stdin/stdout, read a shared JSON queue format, and share the provider catalog. No long-running web server or remote service is required.
 
 ## Adding an AI provider or model
 
 1. For a different model supported by an existing adapter, enter its model identifier in settings. No code change is necessary.
-2. For a new provider, add an adapter in `Worker/providers` implementing the same request/response contract. Keep its authentication and wire format there. Register it in `registry.mjs` and `provider-catalog.json`; native settings and Keychain handling pick it up automatically.
+2. For a new provider, add an adapter in `ai/providers` implementing the same request/response contract. Keep its authentication and wire format there. Register it in `registry.mjs` and `provider-catalog.json`; native settings and Keychain handling pick it up automatically.
 3. Add transport tests (success, missing credentials, authentication failure, rate limit, malformed/truncated response, cancellation). Run shared engine tests unchanged.
 4. Run an opt-in synthetic live check. Never use someone's personal scans as release fixtures.
 

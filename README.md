@@ -1,75 +1,113 @@
 # Paper In
 
-A small native Mac scanner app: **scan, add more sheets, save one PDF**.
+**Put the paper in. Scan. Save.**
 
-Version 0.2.0 adds paired front/back previews and optional AI filing. The supported scanner is **Brother DS-940DW over USB on macOS**. This is a community project, not a Brother product.
+A small Mac app for turning a stack of paper into PDFs you can find again. Built after one too many “no paper,” “jam,” and “could not connect” messages from the scanner's original software.
 
-## Use
+Paper In currently supports the **Brother DS-940DW over USB**. It is an independent community project, not a Brother product.
 
-1. Close other scanner applications, power on the DS-940DW in USB mode and click **Connect**.
-2. Insert a sheet and press **Scan** or Space. Keep adding sheets to the document.
-3. Review **Front + back** together, or switch to **Single page**. Select either side to rotate, crop or remove it. Zoom each preview independently. Removed sides can be restored.
-4. Press **Save PDF** or Command-S. The destination is remembered, and a fresh document starts.
+![Front and back of a sheet displayed together in Paper In. This screenshot uses generated sample pages.](docs/images/paired-preview.png)
 
-Every completed image is committed to a recoverable draft. Originals and reversible crop metadata are retained. Older drafts remain readable; pages without trustworthy sheet metadata stay individually displayed instead of guessing pairs.
+## What it does
 
-## Optional AI filing
+- **One document, as many pages as you need.** Scan a sheet, add another, save one PDF.
+- **Front and back together.** Review each sheet, zoom either side, rotate, crop, or remove pages. Removed pages can be restored.
+- **Recoverable drafts.** Completed pages are saved as you go, including across app restarts.
+- **Optional AI filing.** Read the saved document, suggest a name and folder, check related documents, and file clear matches. Uncertain results wait for review.
+- **Originals and Undo.** AI filing keeps the original PDF. Existing files are not overwritten, and filing can be undone.
 
-Choose your document root with **Change…**, then open **AI filing…**. It is off by default. New documents are first saved under `_Inbox` in that root. A separate worker performs local OCR, proposes a name and folder, checks relevant existing documents, and cross-checks its proposal with a second model call. Scanning remains available while it works.
+Scanning works without an AI account. AI filing is off by default.
 
-- **Codex:** official Codex SDK with its runtime's existing login (`codex login`).
-- **Claude:** official Claude Agent SDK with its runtime's existing login (`claude auth login`). Paper In identifies itself as `paper-in/0.2.0`; it does not extract tokens or impersonate another client. Provider eligibility, subscription limits and terms still apply. See [provider notes](docs/providers.md).
-- **API keys:** OpenAI Responses or Anthropic Messages. Enter a model identifier and store the key in macOS Keychain. API billing is separate from subscriptions.
+## Get it running
 
-Node.js **22+** is needed for AI filing. Scanning works without Node. Runtime paths are auto-detected and can be overridden in settings. The source build installs pinned SDK dependencies locally; it never changes your global CLI installations.
+This is an early project built from source. There is no signed installer yet. The build is tested on Apple Silicon; macOS 14 or later is required. Other Mac architectures and scanner models are not yet verified.
 
-Automatically filing clear matches is optional. New folders, weak OCR, low confidence, disagreement between checks, duplicates and possible continuation pages require review. Open **Saved documents** to change the proposed name/location, approve filing, retry a failed job, reveal the PDF or Undo. Retry uses the currently selected provider settings. Names are never allowed to escape the selected root. Existing files are not overwritten; a short ID resolves ordinary name collisions. Related documents are never automatically merged or deleted.
-
-The worker sees the folder structure, hashes existing PDFs for exact duplicates, and locally reads up to eight ranked candidate PDFs. It is a bounded comparison, not a claim to have semantically compared every page of a large archive. OCR and small-file indexing can take time on first use. Existing PDFs are read for context; only newly saved, explicitly opted-in exports become filing jobs.
-
-### Privacy and recovery
-
-When AI filing is enabled, extracted text, folder names and candidate excerpts are sent to the selected provider. Original page images are not uploaded by this implementation. OCR is local. The worker uses a separate empty working directory for each job; agent execution tools and external integrations are disabled. Providers can retain data according to the selected account and runtime settings. Codex can retain its own local session history.
-
-Drafts, original PDFs, the queue and local OCR cache live under `~/Library/Application Support/Paper In`. API keys are stored in Keychain and passed only to the worker's stdin. Diagnostics omit document text and provider response bodies. Nothing is written into a notes vault or sent through a project server.
-
-Published-export manifests are the durable handoff: if the app quits between saving and starting AI, the next run discovers that job. Interrupted analysis is retried. Publishing and Undo have persisted intent records and retain original bytes. Changed files are not deleted by Undo. Source scans and old drafts are retained; there is no automatic storage cleanup yet.
-
-## Build and test
-
-Requirements: macOS 14+, Xcode or Command Line Tools, Node.js 22+ and npm for the AI worker dependencies. Apple Silicon is tested; other Mac architectures are not yet validated.
+You need Apple's Xcode Command Line Tools (or Xcode), **Node.js 22+**, and npm. If the Apple tools are missing, run `xcode-select --install` first.
 
 ```sh
+git clone https://github.com/kellygold/paper-in.git
+cd paper-in
 ./build.sh
 open '.build/Paper In.app'
-./test.sh
 ```
 
-The build uses the selected SDK and host architecture, with a narrowly scoped fallback for the known Swift 6.1.2 / mismatched CLT installation. `PAPER_IN_SDK` and `PAPER_IN_ARCH` can override these choices. No system settings are changed. Builds are ad-hoc signed for local use; public downloadable releases need signing/notarization work.
+The build installs pinned AI SDKs inside the project and signs the app for local use. It does not change your global CLI installations or replace an installed Paper In app. To install it, quit any running copy and copy `.build/Paper In.app` into your Applications folder.
 
-For scanner-free UI inspection:
+The app bundle is currently about 515 MB because it contains both provider runtimes. Node itself is not bundled. [Build details and development commands →](docs/development.md)
+
+## Scan your first document
+
+1. Put the DS-940DW in USB mode, connect it, and close other scanner apps.
+2. Open Paper In, choose your destination folder with **Change…**, then click **Connect**.
+3. Insert a sheet and click **Scan** or press Space. Repeat to add sheets to the same document.
+4. Review the pages and click **Save PDF** or press Command-S.
+
+The destination is remembered. Saving starts a fresh document. The scanner's physical Start button is not supported yet; use the app button or Space.
+
+To explore the UI without a scanner:
 
 ```sh
 open -n '.build/Paper In.app' --args --demo
-open -n '.build/Paper In.app' --args --demo --demo-settings
-open -n '.build/Paper In.app' --args --demo --demo-review
 ```
 
-Demo mode uses generated pages and temporary storage and refuses provider requests. `--screenshot /absolute/path.png` exports the demo window for visual review.
+Demo mode uses generated pages, temporary storage, and no AI requests.
 
-`./test.sh` runs native persistence/PDF/crop/scanner-contract tests and Node queue/provider tests. Live synthetic provider checks are separately opt-in; see [validation](docs/validation.md).
+## Let AI organize the saved PDFs
 
-## Extend
+Open **AI filing…**, enable filing, and choose a provider:
 
-The app has one shared document workflow, a `ScannerBackend` contract and a shared AI proposal contract. Supported implementations are registered in catalogs. Start with [architecture](docs/architecture.md), which includes adding a provider or scanner and the tests an implementation must pass.
+| Connection | Setup |
+| --- | --- |
+| Codex | Use the official runtime's existing login with `codex login`. |
+| Claude | Use the official runtime's existing login with `claude auth login`. |
+| OpenAI or Anthropic API | Enter a model ID and an API key. Keys are stored in macOS Keychain. API billing is separate. |
+
+Existing-login integrations use the official SDKs. Availability depends on your provider's account, limits, and terms; see [provider setup and eligibility](docs/providers.md).
+
+New saves go to `_Inbox` first. The worker extracts text locally, proposes a filename and folder, then makes a second AI call to check the proposal. You can keep scanning while it runs.
+
+Open **Saved documents** to see progress, approve a suggestion, change its name or folder, retry, Undo, or **Show PDF in Finder**. New folders, weak OCR, possible duplicates, related documents, and disagreements between the two checks require review. Related files are never automatically merged.
+
+Enabling AI does **not** retroactively organize PDFs saved before it was enabled. It applies to subsequent saves, including a draft started before enabling it.
+
+**Privacy:** extracted text, folder names, and excerpts from up to eight candidate PDFs are sent to the selected provider. Page images stay local. This is text-based filing, so photographs without text will generally need manual organization. [Data storage, privacy, and recovery →](docs/privacy-and-recovery.md)
+
+## Find your way around the code
+
+There are two parts to the app: the Mac interface and the AI filing process. They share one document workflow.
+
+```text
+app/          Mac app: screens, scanner connections, documents, AI settings
+ai/           AI filing: OCR, providers, naming, folders, review, Undo
+tests/        Automated checks and opt-in synthetic integration tests
+docs/         Architecture, provider setup, development, test evidence
+scripts/      Build and test helpers
+build.sh      Build the app
+test.sh       Build and run the automated checks
+```
+
+Start with [the project map](docs/project-map.md). It explains which file to open for common changes. The [architecture guide](docs/architecture.md) describes the shared contracts and how to add a scanner or AI provider.
+
+A new model supported by an existing provider only needs a model ID in settings. A new provider or scanner gets an adapter; previews, storage, review, and recovery stay shared.
+
+## Contribute
+
+```sh
+./test.sh
+```
+
+The default tests use synthetic documents and fake scanners/providers. No account, API key, or connected scanner is needed to run them. CI runs the same command on macOS. Live provider checks are separately opt-in.
+
+See [contributing](docs/contributing.md) for a first change, [test evidence](docs/validation.md) for what is verified, and [troubleshooting](docs/troubleshooting.md) for scanner or filing problems.
 
 ## Current limits
 
-- Only the DS-940DW USB profile is supported and hardware-tested. Network scanners, other Brother models, flatbeds and multi-sheet ADFs are not advertised as supported.
-- Capture remains A4, 300 dpi, colour. Automatic crop sizes small items correctly; it does not extend acquisition for long receipts or deskew pages.
-- Physical scanner-button events and automatic insertion scanning are not implemented. Use Scan or Space.
-- Local OCR feeds classification; exported PDFs do not yet receive a searchable text layer.
-- Image processing and PDF generation remain on the main thread; very large documents may briefly pause export. AI work runs outside that thread.
-- AI output is fallible. Both checks use the selected provider, and confidence is not a measured probability. Review and Undo remain available.
+- DS-940DW over USB only. No Wi-Fi, other scanner models, or multi-sheet feeders are advertised as supported.
+- Capture is A4, 300 dpi, colour. Automatic crop handles small items; long receipts and deskew are not implemented.
+- OCR feeds AI filing; PDFs do not yet receive a searchable text layer.
+- Very large exports may briefly pause the interface. Drafts and recovery copies are retained without automatic cleanup.
+- AI can misread or misclassify documents. Its second check uses the same provider, and confidence is a heuristic. Review and Undo remain available.
 
-Paper In source is MIT licensed. Bundled/development dependencies retain their own licenses, including the proprietary Claude Agent SDK/runtime. See [third-party notices](docs/third-party.md).
+## License
+
+Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). Public binary distribution still needs signing, notarization, and dependency redistribution review.

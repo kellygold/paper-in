@@ -1,8 +1,8 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { apiProposal } from '../providers/api.mjs';
-import { safeProviderError, runtimeEnvironment } from '../providers/environment.mjs';
-import { proposalSchema } from '../schema.mjs';
+import { apiProposal } from '../../ai/providers/api.mjs';
+import { safeProviderError, runtimeEnvironment } from '../../ai/providers/environment.mjs';
+import { proposalSchema } from '../../ai/schema.mjs';
 const proposal = {
   folder: 'Medical',
   filename: 'Undated - Example.pdf',
@@ -93,7 +93,7 @@ test('runtime environment excludes provider keys and bearer tokens', () => {
 });
 
 test('provider catalog and adapters define the same extensible surface', async () => {
-  const { providerCatalog, adapters } = await import('../providers/registry.mjs');
+  const { providerCatalog, adapters } = await import('../../ai/providers/registry.mjs');
   assert.equal(new Set(providerCatalog.map((p) => p.id)).size, providerCatalog.length);
   assert.deepEqual([...adapters.keys()].sort(), providerCatalog.map((p) => p.id).sort());
   for (const descriptor of providerCatalog) {

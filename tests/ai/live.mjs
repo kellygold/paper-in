@@ -1,6 +1,6 @@
 // Explicit opt-in; synthetic text only. No real documents or folder names.
-import { propose } from '../providers/index.mjs';
-import { promptFor } from '../schema.mjs';
+import { propose } from '../../ai/providers/index.mjs';
+import { promptFor } from '../../ai/schema.mjs';
 import fs from 'node:fs/promises';
 import os from 'node:os';
 import path from 'node:path';

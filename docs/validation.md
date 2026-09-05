@@ -48,6 +48,12 @@ The paired preview, settings and review screens are checked using demo mode and 
 
 The 0.1.4 scanner path had real single/duplex DS-940DW captures confirmed. Version 0.2.0 reorganizes that same transport/profile behind a shared scanner interface; its automated tests pass, but a fresh physical capture in the new build still needs the user to feed a sheet. No other model, Wi-Fi, physical Start button, long receipt, unplug/replug or sleep/wake compatibility claim is added by this work.
 
+## Repository organization verification
+
+The `app/`, `ai/`, and unified `tests/` layout passed all 47 existing automated scenarios on 5 September 2026. The opt-in native controller → packaged worker → local OCR → Codex → filing → Undo check also passed after the move, including temporary Keychain store/read/remove. No application logic or on-disk document format changed.
+
+`./scripts/live-native-test.sh` reproduces the packaged-worker check using generated content and the existing Codex login. It consumes provider quota and retains evidence under `.build/live-native-*`.
+
 ## Before a public binary release
 
 - Verify a fresh physical single-sided and duplex scan using the new build, including missing-back behavior and restart recovery.

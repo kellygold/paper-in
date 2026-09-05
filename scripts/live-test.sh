@@ -11,8 +11,9 @@ case "$paper_provider" in
 esac
 ./build.sh
 source scripts/toolchain.sh
-xcrun swiftc "${paper_swift[@]}" Sources/Support/PaperError.swift Sources/Filing/FilingTypes.swift Sources/Imaging/AutoCrop.swift Sources/Storage/DraftStore.swift Tests/Integration/main.swift -o .build/integration-fixture
+source scripts/project.sh
+xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/Integration/main.swift -o .build/integration-fixture
 paper_fixture="$PWD/.build/live-$(uuidgen)"
 .build/integration-fixture "$paper_fixture" "$paper_provider"
-node Worker/test/end-to-end.mjs "$paper_fixture"
+node tests/ai/end-to-end.mjs "$paper_fixture"
 echo "Synthetic evidence retained in $paper_fixture"

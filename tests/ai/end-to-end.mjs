@@ -1,7 +1,7 @@
 // Opt-in live integration: Swift export handoff -> local OCR -> provider -> file -> undo.
-import { FilingEngine } from '../engine.mjs';
-import { propose } from '../providers/index.mjs';
-import { hash } from '../files.mjs';
+import { FilingEngine } from '../../ai/engine.mjs';
+import { propose } from '../../ai/providers/index.mjs';
+import { hash } from '../../ai/files.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 const root = await fs.realpath(process.argv[2]);

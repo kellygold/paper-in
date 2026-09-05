@@ -3,9 +3,9 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import os from 'node:os';
-import { FilingEngine, withLock } from '../engine.mjs';
-import { atomicJSON, hash, exists, confined, validRelative } from '../files.mjs';
-import { validateProposal } from '../schema.mjs';
+import { FilingEngine, withLock } from '../../ai/engine.mjs';
+import { atomicJSON, hash, exists, confined, validRelative } from '../../ai/files.mjs';
+import { validateProposal } from '../../ai/schema.mjs';
 const id = '11111111-1111-4111-8111-111111111111';
 const proposal = () => ({
   folder: 'Car/Servicing',
