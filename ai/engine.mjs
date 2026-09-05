@@ -23,6 +23,7 @@ export class FilingEngine {
     this.ocr = ocr;
     this.library = library;
     this.helper = helper;
+    this.issues = new Set();
   }
   jobDir(id) {
     if (!/^[0-9a-f-]{36}$/i.test(id)) throw new Error('Invalid job identity.');
@@ -33,7 +34,8 @@ export class FilingEngine {
   }
   async load(id) {
     const job = await readJSON(path.join(this.jobDir(id), 'job.json'));
-    if (job.id !== id) throw new Error('Job identity mismatch.');
+    if (job.id !== id || typeof job.created !== 'string' || typeof job.state !== 'string')
+      throw new Error('Invalid filing record.');
     return job;
   }
   async list() {
@@ -43,8 +45,10 @@ export class FilingEngine {
       if (!/^[0-9a-f-]{36}$/i.test(id)) continue;
       try {
         jobs.push(await this.load(id));
-      } catch {
-        throw new Error('A filing record is unreadable. Original scans are preserved.');
+      } catch (error) {
+        // Discovery can be interrupted before job.json is committed. Keep other jobs usable.
+        if (error.code !== 'ENOENT')
+          this.issues.add('A filing record is unreadable. Its original PDF is preserved.');
       }
     }
     return jobs.sort((a, b) => b.created.localeCompare(a.created));
@@ -54,34 +58,41 @@ export class FilingEngine {
     if (!(await exists(drafts))) return;
     for (const id of await fs.readdir(drafts)) {
       if (!/^[0-9a-f-]{36}$/i.test(id)) continue;
-      const draft = await readJSON(path.join(drafts, id, 'manifest.json'));
-      const record = draft.export,
-        intent = record?.filing;
-      if (!record?.published || !intent) continue;
-      const jobdir = this.jobDir(id),
-        file = path.join(jobdir, 'job.json');
-      if (await exists(file)) continue;
-      await fs.mkdir(jobdir, { recursive: true, mode: 0o700 });
-      const source = path.join(drafts, id, 'export.pdf'),
-        bytes = await fs.readFile(source);
-      if (hash(bytes) !== record.sha256) throw new Error('Export integrity check failed.');
-      const snapshot = path.join(jobdir, 'original.pdf');
-      if (!(await exists(snapshot))) await publishBytes(source, snapshot, record.sha256);
-      else if (hash(await fs.readFile(snapshot)) !== record.sha256)
-        throw new Error('Filing snapshot integrity check failed.');
-      const original = new URL(record.destination).pathname;
-      await this.save({
-        id,
-        created: new Date().toISOString(),
-        state: 'queued',
-        original: decodeURIComponent(original),
-        root: intent.root,
-        settings: intent.settings,
-        sha256: record.sha256,
-        proposal: null,
-        error: null,
-        target: null,
-      });
+      try {
+        const jobdir = this.jobDir(id),
+          file = path.join(jobdir, 'job.json');
+        if (await exists(file)) continue;
+        const manifest = path.join(drafts, id, 'manifest.json');
+        // A newly created draft directory may not have its manifest yet.
+        if (!(await exists(manifest))) continue;
+        const draft = await readJSON(manifest);
+        const record = draft.export,
+          intent = record?.filing;
+        if (!record?.published || !intent) continue;
+        await fs.mkdir(jobdir, { recursive: true, mode: 0o700 });
+        const source = path.join(drafts, id, 'export.pdf'),
+          bytes = await fs.readFile(source);
+        if (hash(bytes) !== record.sha256) throw new Error('Export integrity check failed.');
+        const snapshot = path.join(jobdir, 'original.pdf');
+        if (!(await exists(snapshot))) await publishBytes(source, snapshot, record.sha256);
+        else if (hash(await fs.readFile(snapshot)) !== record.sha256)
+          throw new Error('Filing snapshot integrity check failed.');
+        const original = new URL(record.destination).pathname;
+        await this.save({
+          id,
+          created: new Date().toISOString(),
+          state: 'queued',
+          original: decodeURIComponent(original),
+          root: intent.root,
+          settings: intent.settings,
+          sha256: record.sha256,
+          proposal: null,
+          error: null,
+          target: null,
+        });
+      } catch {
+        this.issues.add('A saved draft could not be prepared for filing. Other documents can continue; originals are preserved.');
+      }
     }
   }
   async analyze(job, secrets = {}) {
@@ -160,8 +171,11 @@ export class FilingEngine {
     }
   }
   async apply(id, override) {
+    return this.attempt(id, () => this.publish(id, override));
+  }
+  async publish(id, override) {
     let job = await this.load(id);
-    if (job.state === 'filed') return job;
+    if (job.state === 'filed') return this.cleanupInbox(job);
     if (!['review', 'publishing'].includes(job.state))
       throw new Error('This document is not ready to file.');
     if (override) {
@@ -195,18 +209,45 @@ export class FilingEngine {
     } else await publishBytes(path.join(this.jobDir(id), 'original.pdf'), job.target, job.sha256);
     job.state = 'filed';
     job.error = null;
+    job.cleanupPending = true;
     await this.save(job);
-    // Only clean up the app's inbox copy, never an arbitrary model-selected file.
-    if (
-      job.original !== job.target &&
-      path.dirname(job.original) === path.join(job.root, '_Inbox')
-    ) {
-      await confined(job.root, path.relative(job.root, job.original));
-      await removeIfSame(job.original, job.sha256);
+    return this.cleanupInbox(job);
+  }
+  async cleanupInbox(job) {
+    if (job.cleanupPending === false) return job;
+    try {
+      // Cleanup is separate from the committed filing result and never follows links.
+      if (job.original !== job.target &&
+          path.dirname(job.original) === path.join(job.root, '_Inbox')) {
+        await confined(job.root, path.relative(job.root, job.original));
+        await removeIfSame(job.original, job.sha256);
+      }
+      job.cleanupPending = false;
+      job.error = null;
+    } catch {
+      job.cleanupPending = true;
+      job.error = 'Filed successfully. Inbox cleanup is paused; both copies are safe. Restore access to the inbox, then retry cleanup.';
     }
+    await this.save(job);
     return job;
   }
+  async attempt(id, action) {
+    try {
+      return await action();
+    } catch (error) {
+      // Preserve transaction state/targets so a retry resumes instead of starting over.
+      const job = await this.load(id);
+      job.error = ['publishing', 'undoing'].includes(job.state)
+        ? 'Filing is paused. Check that the original destination is available, then retry. Your saved PDF is safe.'
+        : (error.message || 'Filing could not finish. Your saved PDF is safe.');
+      await this.save(job);
+      throw error;
+    }
+  }
   async undo(id) {
+    return this.attempt(id, () => this.restore(id));
+  }
+  async restore(id) {
     const job = await this.load(id);
     if (!['filed', 'undoing'].includes(job.state))
       throw new Error('Only a filed document can be undone.');
@@ -235,6 +276,11 @@ export class FilingEngine {
   }
   async retry(id, settings) {
     const job = await this.load(id);
+    if (['publishing', 'undoing'].includes(job.state)) {
+      job.error = null;
+      await this.save(job);
+      return;
+    }
     if (!['failed', 'undone'].includes(job.state)) throw new Error('This job cannot be retried.');
     job.state = 'queued';
     job.error = null;
@@ -244,14 +290,23 @@ export class FilingEngine {
     await this.save(job);
   }
   async run(secrets = {}) {
+    this.issues.clear();
     await this.discover();
     for (const job of (await this.list()).reverse()) {
       if (workerSignal.aborted) break;
-      if (['queued', 'analyzing'].includes(job.state)) await this.analyze(job, secrets);
-      else if (job.state === 'publishing') await this.apply(job.id);
-      else if (job.state === 'undoing') await this.undo(job.id);
+      try {
+        if (['queued', 'analyzing'].includes(job.state)) await this.analyze(job, secrets);
+        else if (job.state === 'publishing') await this.apply(job.id);
+        else if (job.state === 'undoing') await this.undo(job.id);
+        else if (job.state === 'filed' && job.cleanupPending !== false)
+          await this.cleanupInbox(job);
+      } catch {
+        this.issues.add('One document could not finish filing. Other documents continued; open Saved documents to retry.');
+      }
     }
+    return [...this.issues];
   }
+
 }
 export async function withLock(root, action) {
   const folder = path.join(root, 'filing');

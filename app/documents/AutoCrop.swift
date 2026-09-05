@@ -8,6 +8,7 @@ struct PageCrop: Codable, Equatable {
   var y: Double
   var width: Double
   var height: Double
+  var scannerBackground: [[Int]]? = nil
   func rectangle(in image: CGImage) -> CGRect {
     CGRect(
       x: x * Double(image.width), y: y * Double(image.height), width: width * Double(image.width),
@@ -20,11 +21,17 @@ enum AutoCrop {
     var current = image
     var bounds = CGRect(x: 0, y: 0, width: image.width, height: image.height)
     var changed = false
+    var backgrounds: [[Int]] = []
     // The device pads beyond the paper with a different grey from its roller background.
     // First remove that padding, then locate the physical item within the remaining strip.
     for _ in 0..<3 {
-      guard let next = detectOnce(current) else { break }
+      guard let next = detectRim(current) ?? detectOnce(current) else { break }
       let rect = next.rectangle(in: current)
+      backgrounds += next.scannerBackground ?? []
+      if rect.width == CGFloat(current.width) && rect.height == CGFloat(current.height) {
+        changed = !backgrounds.isEmpty || changed
+        break
+      }
       guard let cropped = current.cropping(to: rect),
         rect.width < CGFloat(current.width) || rect.height < CGFloat(current.height)
       else { break }
@@ -37,7 +44,79 @@ enum AutoCrop {
     guard changed else { return nil }
     return PageCrop(
       x: bounds.minX / Double(image.width), y: bounds.minY / Double(image.height),
-      width: bounds.width / Double(image.width), height: bounds.height / Double(image.height))
+      width: bounds.width / Double(image.width), height: bounds.height / Double(image.height),
+      scannerBackground: backgrounds.isEmpty ? nil : backgrounds)
+  }
+  // A nearly full-size sheet can have a grey rim on just one or two sides.
+  // A median-of-all-borders background misses that case. Inspect each edge
+  // independently and require a continuous neutral rim before trimming it.
+  private static func detectRim(_ image: CGImage) -> PageCrop? {
+    let scale = min(1, 900.0 / Double(max(image.width, image.height)))
+    let w = Int(Double(image.width) * scale)
+    let h = Int(Double(image.height) * scale)
+    guard w >= 100, h >= 100 else { return nil }
+    var pixels = [UInt8](repeating: 255, count: w * h * 4)
+    let ok = pixels.withUnsafeMutableBytes { bytes -> Bool in
+      guard
+        let ctx = CGContext(
+          data: bytes.baseAddress, width: w, height: h,
+          bitsPerComponent: 8, bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+      else { return false }
+      ctx.interpolationQuality = .high
+      ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+      return true
+    }
+    guard ok else { return nil }
+    // Only use this refinement on a predominantly bright sheet. Small items
+    // on a scanner background continue through the physical-item detector.
+    var white = 0
+    for p in 0..<(w * h) {
+      if min(pixels[p * 4], min(pixels[p * 4 + 1], pixels[p * 4 + 2])) >= 240 { white += 1 }
+    }
+    guard white >= w * h * 3 / 4 else { return nil }
+    var backgrounds: [[Int]] = []
+    func inset(vertical: Bool, far: Bool) -> Int {
+      let length = vertical ? h : w
+      let depth = vertical ? w : h
+      let limit = max(1, depth / 25)
+      var runs: [Int] = []
+      var graySamples: [[Int]] = []
+      var supported = 0
+      for along in 0..<length {
+        var run = 0
+        var hasGray = false
+        for step in 0..<limit {
+          let across = far ? depth - 1 - step : step
+          let p = vertical ? along * w + across : across * w + along
+          let rgb = (0..<3).map { Int(pixels[p * 4 + $0]) }
+          guard rgb.max()! <= 240, rgb.max()! - rgb.min()! <= 32 else { break }
+          if rgb.min()! >= 45 && rgb.max()! <= 230 {
+            hasGray = true
+            graySamples.append(rgb)
+          }
+          run = step + 1
+        }
+        runs.append(run)
+        if run > 0 && run < limit && hasGray { supported += 1 }
+      }
+      guard supported >= length * 3 / 4, !graySamples.isEmpty else { return 0 }
+      backgrounds.append(
+        (0..<3).map { c in graySamples.map { $0[c] }.sorted()[graySamples.count / 2] })
+      // Keep the full physical paper extent. The residual slanted rim is
+      // whitened outside the paper instead of cropping into the page.
+      let sorted = runs.sorted()
+      return max(0, (sorted.first ?? 0) - 1)
+    }
+    let left = inset(vertical: true, far: false)
+    let right = inset(vertical: true, far: true)
+    let top = inset(vertical: false, far: false)
+    let bottom = inset(vertical: false, far: true)
+    guard !backgrounds.isEmpty else { return nil }
+    return PageCrop(
+      x: Double(left) / Double(w), y: Double(top) / Double(h),
+      width: Double(w - left - right) / Double(w), height: Double(h - top - bottom) / Double(h),
+      scannerBackground: backgrounds)
   }
   private static func detectOnce(_ image: CGImage) -> PageCrop? {
     let scale = min(1, 900.0 / Double(max(image.width, image.height)))
@@ -165,12 +244,69 @@ enum AutoCrop {
     let bottom = min(h, best.bottom + 3)
     return PageCrop(
       x: Double(left) / Double(w), y: Double(top) / Double(h),
-      width: Double(right - left) / Double(w), height: Double(bottom - top) / Double(h))
+      width: Double(right - left) / Double(w), height: Double(bottom - top) / Double(h),
+      scannerBackground: [background] + (secondary.map { [$0] } ?? []))
   }
   static func apply(_ crop: PageCrop?, to image: CGImage) -> CGImage {
     guard let crop else { return image }
     let rect = crop.rectangle(in: image)
     guard !rect.isNull, rect.width > 0, rect.height > 0 else { return image }
-    return image.cropping(to: rect) ?? image
+    let cropped = image.cropping(to: rect) ?? image
+    return cleanRim(cropped, backgrounds: crop.scannerBackground ?? [])
   }
+  private static func cleanRim(_ image: CGImage, backgrounds: [[Int]]) -> CGImage {
+    let colors = backgrounds.filter { $0.count == 3 }
+    guard !colors.isEmpty else { return image }
+    let w = image.width
+    let h = image.height
+    var pixels = [UInt8](repeating: 255, count: w * h * 4)
+    return pixels.withUnsafeMutableBytes { bytes -> CGImage in
+      guard
+        let ctx = CGContext(
+          data: bytes.baseAddress, width: w, height: h,
+          bitsPerComponent: 8, bytesPerRow: w * 4, space: CGColorSpaceCreateDeviceRGB(),
+          bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+      else { return image }
+      ctx.draw(image, in: CGRect(x: 0, y: 0, width: w, height: h))
+      let data = bytes.bindMemory(to: UInt8.self)
+      var seen = [Bool](repeating: false, count: w * h)
+      var queue: [Int] = []
+      func add(_ x: Int, _ y: Int) {
+        guard x >= 0, y >= 0, x < w, y < h,
+          x < max(2, w / 25) || x >= w - max(2, w / 25) || y < max(2, h / 25)
+            || y >= h - max(2, h / 25)
+        else { return }
+        let p = y * w + x
+        guard !seen[p] else { return }
+        seen[p] = true
+        let rgb = (0..<3).map { Int(data[p * 4 + $0]) }
+        guard rgb.min()! >= 45, rgb.max()! <= 240, rgb.max()! - rgb.min()! <= 32,
+          colors.contains(where: { c in (0..<3).allSatisfy { abs(c[$0] - rgb[$0]) <= 32 } })
+        else { return }
+        queue.append(p)
+      }
+      for x in 0..<w {
+        add(x, 0)
+        add(x, h - 1)
+      }
+      for y in 0..<h {
+        add(0, y)
+        add(w - 1, y)
+      }
+      var next = 0
+      while next < queue.count {
+        let p = queue[next]
+        next += 1
+        for c in 0..<4 { data[p * 4 + c] = 255 }
+        let x = p % w
+        let y = p / w
+        add(x - 1, y)
+        add(x + 1, y)
+        add(x, y - 1)
+        add(x, y + 1)
+      }
+      return ctx.makeImage() ?? image
+    }
+  }
+
 }

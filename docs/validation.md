@@ -1,24 +1,25 @@
 # Validation
 
-Status: local build verified on 5 September 2026; not a public signed release.
+Status: local 0.3.9 build verified on 6 September 2026; source release, not a signed installer.
 
 ## Automated checks
 
-`./test.sh` builds the application and runs native and worker tests without contacting scanners or providers.
+`./test.sh` builds the application and passes 91 offline checks (64 native, 27 worker) without contacting scanners or providers.
 
 - 13 draft/PDF scenarios: original-byte retention, restart and same-process recovery, interrupted capture/export, collision refusal, edits, 40-page documents, image orientation, explicit sheet pairing, legacy pages and durable AI handoff.
-- 4 eSCL transport scenarios: rejected jobs, foreign job URLs, complete image/PDF delivery, incomplete images and status parsing (some assertions share a scenario).
-- 4 crop scenarios: cards, receipts, blank pages, physical PDF sizes, scanner padding, reversible metadata and unchanged original bytes.
-- 7 blank-page scenarios: blank/noisy white paper and isolated specks; tiny, faint, edge and coloured marks; uncertain backgrounds; duplex-only skip with unchanged originals; PDF page counts; restoration and restart; disabled/simplex/unpaired behavior; interrupted-ingest recovery (some assertions share a scenario).
+- 5 eSCL transport scenarios: rejected jobs, foreign job URLs, complete image/PDF delivery, incomplete images and status parsing (some assertions share a scenario).
+- 5 crop scenarios: cards, receipts, blank pages, physical PDF sizes, scanner padding, reversible metadata and unchanged original bytes.
+- 1 maximum-length receipt scenario: retains both ends through crop, restart, preview and one tall PDF, with original bytes preserved.
+- 12 blank-page scenarios: white/noisy paper and specks; faint, tiny, edge and coloured marks; uncertain backgrounds; either-side, simplex and import skipping; all-blank drafts; unchanged originals; PDF page counts; restoration, restart and interrupted-ingest recovery; skewed receipt silhouettes and broad shadows with crop enabled or disabled.
 - 2 legacy ImageCapture connection scenarios retained as regression fixtures.
-- 3 shared scanner-session contract scenarios: capabilities, scan options, ordered pages, consumer storage failure, pause and transport replacement without losing draft callbacks.
-- 11 scanner transport scenarios: local endpoint validation plus shared USB/Wi-Fi duplex delivery, duplicate-start prevention, missing-back preservation, empty/jammed feeder refusal, wrong-model rejection and stale discovery callbacks.
-- 2 native application-flow scenarios: paired selection, per-side edit/removal/restoration, adding another sheet and saving a four-page PDF; capture callbacks skip a blank back, update previews, restore that exact side and save both pages.
-- 21 worker scenarios: idempotent export discovery, both classification passes, mandatory review, failed/retried analysis, malformed outputs, traversal/symlink rejection, output collisions, interrupted publication/Undo, changed-file preservation, stale locks, corrupted originals, provider registry consistency, both API wire formats, incomplete responses, missing credentials/rate limits and credential-safe errors.
+- 4 shared scanner-session contract scenarios: capabilities, scan options, ordered pages, consumer storage failure, pause and transport replacement without losing draft callbacks.
+- 15 scanner transport scenarios: local endpoint validation plus shared USB/Wi-Fi duplex delivery, duplicate-start prevention, missing-back preservation, empty/jammed feeder refusal, wrong-model rejection and stale discovery callbacks.
+- 7 native application-flow scenarios: paired selection, per-side edit/removal/restoration, adding another sheet and saving a four-page PDF; capture callbacks skip a blank back, update previews, restore that exact side and save both pages; side preferences across paper modes, visible order after moving a page, recovered legacy pages after crop failure and the saved model in the mounted settings view.
+- 27 worker scenarios: idempotent export discovery, both classification passes, mandatory review, failed/retried analysis, malformed outputs, traversal/symlink rejection, output collisions, interrupted publication/Undo, changed-file preservation, stale locks, corrupted originals, provider registry consistency, both API wire formats, incomplete responses, missing credentials/rate limits and credential-safe errors. Recovery tests cover unavailable destinations during publishing/Undo, malformed or incomplete records, retryable inbox cleanup and Codex tool isolation across TOML syntax without starting configured commands.
 
 ## Live synthetic tests performed
 
-All documents below were generated fixtures; no personal scans were sent.
+All documents below were generated fixtures; no personal scans were sent. The 0.3.9 pass repeated Codex classification and the native controller → packaged worker → local OCR → live Codex → filing → Undo path, including restored-PDF hash equality and temporary Keychain cleanup. Claude live results below are earlier checks of its unchanged adapter; live API-key services remain untested.
 
 | Check | Result |
 | --- | --- |
@@ -67,3 +68,15 @@ The `app/`, `ai/`, and unified `tests/` layout passed all 47 existing automated 
 - Validate build instructions on a clean supported Mac, then complete Developer ID signing/notarization and dependency redistribution review.
 - Confirm the public app's provider authentication eligibility; technical success does not resolve provider terms.
 - Publish a compatibility list with observed hardware results, not inferred support.
+
+## Auto paper and general blank skipping (0.3.6 candidate)
+
+The scanner's advertised AutoCrop flag and per-source dimensions gate an experimental Auto request. Offline fixtures verify the request on both transports and reject it when unsupported. This does **not** prove the firmware honors the crop flag. Actual image bounds, edge quality and extra-long behavior require physical scanning; no unattended scan is part of these checks.
+
+General blank-skipping tests cover blank fronts with printed backs, both sides blank, simplex/imports, disabled cleanup, restoration after restart, and rejection of empty PDF export. The application flow also clears stale previews when all pages disappear. The new controls separate paper/sides choices from cleanup and connection preferences.
+
+## Shadowed receipt backs (0.3.8 candidate)
+
+A second local classifier runs only after the strict check retains a cropped item on a known scanner background. Synthetic regressions exercise diagonal paper edges and soft fold shadows, both crop settings, tiny and edge ink, faint pencil-like strokes, coloured marks and text. The existing strict detector remains in place for clean or uncertain paper.
+
+Two previously captured receipt pairs were replayed locally through production ingestion: both printed fronts remained and both blank backs were skipped. Restart, restoration and one-page PDF export were verified, with input and retained original bytes unchanged. Those personal images are not repository fixtures. No scanner job or provider request was started for this verification. Fresh physical capture with the installed candidate still needs user confirmation.

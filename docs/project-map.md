@@ -23,7 +23,7 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Change the paired preview or zoom | [app/ui/SheetPreview.swift](../app/ui/SheetPreview.swift), [PagePreview.swift](../app/ui/PagePreview.swift) |
 | Understand draft recovery or PDF creation | [app/documents/DraftStore.swift](../app/documents/DraftStore.swift) |
 | Change page pairing or cropping | [app/documents/SheetGroup.swift](../app/documents/SheetGroup.swift), [AutoCrop.swift](../app/documents/AutoCrop.swift) |
-| Change blank-back detection | [app/documents/BlankPageDetector.swift](../app/documents/BlankPageDetector.swift); reversible decisions are stored by [DraftStore.swift](../app/documents/DraftStore.swift) |
+| Change blank-page detection | [app/documents/BlankPageDetector.swift](../app/documents/BlankPageDetector.swift), [ShadowedPaperDetector.swift](../app/documents/ShadowedPaperDetector.swift); reversible decisions are stored by [DraftStore.swift](../app/documents/DraftStore.swift) |
 | Add a scanner | [app/scanning/ScannerBackend.swift](../app/scanning/ScannerBackend.swift), then [ScannerCatalog.swift](../app/scanning/ScannerCatalog.swift) |
 | Debug scanner discovery or switch USB/Wi-Fi | [app/scanning/ScannerDiscovery.swift](../app/scanning/ScannerDiscovery.swift) |
 | Debug capture or add an eSCL model profile | [app/scanning/ESCLScannerBackend.swift](../app/scanning/ESCLScannerBackend.swift), [ESCLScannerProfile.swift](../app/scanning/ESCLScannerProfile.swift) |
@@ -34,6 +34,7 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Add an AI provider | [ai/providers/registry.mjs](../ai/providers/registry.mjs), then [provider-catalog.json](../ai/provider-catalog.json) |
 | Change how related documents are found | [ai/library.mjs](../ai/library.mjs) |
 | Understand file safety and Undo | [ai/engine.mjs](../ai/engine.mjs), [files.mjs](../ai/files.mjs) |
+| Change Codex tool isolation | [ai/providers/codex-isolation.mjs](../ai/providers/codex-isolation.mjs) |
 | Change local OCR | [ai/ocr.m](../ai/ocr.m) |
 | Run tests or debug the build | [development.md](development.md) |
 

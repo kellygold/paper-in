@@ -20,6 +20,9 @@ xcrun swiftc -parse-as-library "${paper_swift[@]}" app/support/*.swift app/scann
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/Crop/main.swift -o .build/crop-tests
 .build/crop-tests
 
+xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/LongPaper/main.swift -o .build/long-paper-tests
+.build/long-paper-tests
+
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/BlankPages/main.swift -o .build/blank-page-tests
 .build/blank-page-tests
 

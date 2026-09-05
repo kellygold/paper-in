@@ -40,8 +40,31 @@ final class FixtureScanner: URLProtocol {
 
 @main enum Tests {
   static let capabilities = Data(
-    "<ScannerCapabilities><MakeAndModel>DS-940DW</MakeAndModel><AdfOption>Duplex</AdfOption></ScannerCapabilities>"
+    "<ScannerCapabilities><MakeAndModel>DS-940DW</MakeAndModel><AdfOption>Duplex</AdfOption><Adf><AdfSimplexInputCaps><MaxHeight>36600</MaxHeight></AdfSimplexInputCaps><AdfDuplexInputCaps><MaxHeight>4200</MaxHeight></AdfDuplexInputCaps></Adf></ScannerCapabilities>"
       .utf8)
+  static let autoCapabilities = Data(
+    """
+    <scan:ScannerCapabilities xmlns:scan="http://schemas.hp.com/imaging/escl/2011/05/03">
+    <scan:MakeAndModel>DS-940DW</scan:MakeAndModel><scan:AdfOption>Duplex</scan:AdfOption>
+    <scan:AutoCrop>true</scan:AutoCrop><scan:Adf>
+    <scan:AdfSimplexInputCaps><scan:MaxWidth>2550</scan:MaxWidth><scan:MaxHeight>36600</scan:MaxHeight></scan:AdfSimplexInputCaps>
+    <scan:AdfDuplexInputCaps><scan:MaxWidth>2550</scan:MaxWidth><scan:MaxHeight>4200</scan:MaxHeight></scan:AdfDuplexInputCaps>
+    </scan:Adf></scan:ScannerCapabilities>
+    """.utf8)
+  static func body(of request: URLRequest) -> Data {
+    if let data = request.httpBody { return data }
+    guard let stream = request.httpBodyStream else { return Data() }
+    stream.open()
+    defer { stream.close() }
+    var data = Data()
+    var buffer = [UInt8](repeating: 0, count: 4096)
+    while stream.hasBytesAvailable {
+      let count = stream.read(&buffer, maxLength: buffer.count)
+      if count <= 0 { break }
+      data.append(contentsOf: buffer.prefix(count))
+    }
+    return data
+  }
   static func status(_ feeder: String) -> Data {
     Data("<ScannerStatus><State>Idle</State><AdfState>\(feeder)</AdfState></ScannerStatus>".utf8)
   }
@@ -70,6 +93,19 @@ final class FixtureScanner: URLProtocol {
       backend.pause()
       return
     }
+
+    for xml in [
+      "<ScannerCapabilities/>",
+      "<ScannerCapabilities><MaxHeight>36600</MaxHeight></ScannerCapabilities>",
+      "<ScannerCapabilities><Adf><AdfSimplexInputCaps><MaxHeight>4200</MaxHeight></AdfSimplexInputCaps><AdfDuplexInputCaps><MaxHeight>36600</MaxHeight></AdfDuplexInputCaps></Adf></ScannerCapabilities>",
+    ] {
+      let caps = DS940Profile().capabilities(from: try ScanXML.read(Data(xml.utf8)))
+      precondition(caps.paperModes == [.standard])
+    }
+    let normal = try ScanXML.read(DS940Profile().settings(options: ScanOptions(duplex: true)))
+    precondition(normal.values["Height"] == ["3508"] && normal.values["Duplex"] == ["true"])
+    print(
+      "PASS long-paper support requires the simplex limit; normal duplex retains its A4 request")
 
     let usb = try ScannerEndpoint.make(
       connection: .usb, host: "localhost.local.", port: 1234, resourcePath: nil)
@@ -179,6 +215,67 @@ final class FixtureScanner: URLProtocol {
         precondition(backend.message.contains(feeder == "ScannerAdfJam" ? "paper jam" : "No paper"))
         print("PASS \(connection.title) \(feeder) never begins a draft or creates a scan job")
       }
+
+      FixtureScanner.replies = [(200, [:], capabilities)]
+      backend.connect()
+      discovery.deliver?(endpoint)
+      try await waitUntil { backend.connected }
+      let beforeLong = FixtureScanner.requests.count
+      precondition(backend.snapshot.capabilities.paperModes.contains(.longPaper))
+      backend.scan(options: ScanOptions(paperMode: .automatic))
+      precondition(!backend.busy && FixtureScanner.requests.count == beforeLong)
+      backend.scan(options: ScanOptions(duplex: true, paperMode: .longPaper))
+      precondition(!backend.busy && FixtureScanner.requests.count == beforeLong)
+      precondition(backend.message.contains("one side"))
+      pages = 0
+      outcome = nil
+      backend.onCaptureBegan = { options in
+        precondition(!options.duplex && options.paperMode == .longPaper)
+      }
+      FixtureScanner.replies = [
+        (200, [:], status("ScannerAdfLoaded")), (201, ["Location": jobPath], Data()),
+        (200, [:], jpeg), (204, [:], Data()),
+      ]
+      backend.scan(options: ScanOptions(paperMode: .longPaper))
+      try await waitUntil { !backend.busy }
+      precondition(pages == 1 && outcome == true)
+      let request = FixtureScanner.requests[beforeLong + 1]
+      let settings = try ScanXML.read(body(of: request))
+      precondition(settings.values["Height"] == ["21600"])
+      precondition(settings.values["Duplex"] == ["false"])
+      precondition(FixtureScanner.requests[beforeLong + 2].timeoutInterval == 180)
+      backend.pause()
+      print(
+        "PASS \(connection.title) long-paper settings reach the job, receive one page, and reject duplex without a request"
+      )
+
+      FixtureScanner.replies = [(200, [:], autoCapabilities)]
+      backend.connect()
+      discovery.deliver?(endpoint)
+      try await waitUntil { backend.connected }
+      precondition(backend.snapshot.capabilities.paperModes.contains(.automatic))
+      precondition(backend.snapshot.capabilities.supportsDuplex(for: .automatic))
+      let beforeAuto = FixtureScanner.requests.count
+      backend.onCaptureBegan = { options in
+        precondition(options.paperMode == .automatic && options.duplex)
+      }
+      pages = 0
+      outcome = nil
+      FixtureScanner.replies = [
+        (200, [:], status("ScannerAdfLoaded")), (201, ["Location": jobPath], Data()),
+        (200, [:], jpeg), (200, [:], jpeg), (204, [:], Data()),
+      ]
+      backend.scan(options: ScanOptions(duplex: true, paperMode: .automatic))
+      try await waitUntil { !backend.busy }
+      let autoSettings = try ScanXML.read(body(of: FixtureScanner.requests[beforeAuto + 1]))
+      precondition(autoSettings.values["AutoCrop"] == ["true"])
+      precondition(
+        autoSettings.values["Width"] == ["2550"] && autoSettings.values["Height"] == ["4200"])
+      precondition(autoSettings.values["Duplex"] == ["true"] && pages == 2 && outcome == true)
+      backend.pause()
+      print(
+        "PASS \(connection.title) capability-gated Auto requests device cropping, stays within duplex limits, and delivers both sides"
+      )
 
       FixtureScanner.replies = [
         (

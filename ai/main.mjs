@@ -11,14 +11,15 @@ for await (const chunk of process.stdin) {
 try {
   const request = JSON.parse(raw),
     engine = new FilingEngine(request.root, { provider: propose, helper: request.helper });
+  let warnings = [];
   await withLock(request.root, async () => {
-    if (request.command === 'run') await engine.run(request.secrets || {});
+    if (request.command === 'run') warnings = await engine.run(request.secrets || {});
     else if (request.command === 'apply') await engine.apply(request.id, request.override);
     else if (request.command === 'undo') await engine.undo(request.id);
     else if (request.command === 'retry') await engine.retry(request.id, request.settings);
     else if (request.command !== 'list') throw new Error('Unknown filing command.');
   });
-  process.stdout.write(JSON.stringify({ ok: true }));
+  process.stdout.write(JSON.stringify({ ok: true, warning: warnings.length ? warnings.join(' ') : undefined }));
 } catch (error) {
   process.stdout.write(JSON.stringify({ ok: false, error: error.message || 'Filing failed.' }));
   process.exitCode = 1;

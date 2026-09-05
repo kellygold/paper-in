@@ -261,3 +261,104 @@ test('abandoned lock without a PID can recover after its startup grace period', 
   await withLock(root, async () => {});
   assert.equal(await exists(lock), false);
 });
+
+for (const interruptedState of ['publishing', 'undoing'])
+  test(`${interruptedState} on an unavailable volume does not block newer jobs and resumes once`, async (t) => {
+    const { engine, root, data } = await setup(t);
+    await engine.discover();
+    const stuckID = '22222222-2222-4222-8222-222222222222';
+    const volume = path.join(root, 'Volume');
+    await fs.mkdir(path.join(volume, '_Inbox'), { recursive: true });
+    await fs.mkdir(path.join(volume, 'Car/Servicing'), { recursive: true });
+    const target = path.join(volume, 'Car/Servicing', 'Old.pdf');
+    const original = path.join(volume, '_Inbox', 'Old.pdf');
+    await fs.writeFile(interruptedState === 'publishing' ? original : target, data);
+    await fs.mkdir(engine.jobDir(stuckID));
+    await fs.writeFile(path.join(engine.jobDir(stuckID), 'original.pdf'), data);
+    const stuck = {
+      ...(await engine.load(id)), id: stuckID, created: '2000-01-01T00:00:00Z',
+      state: interruptedState, root: volume, original, target,
+      undoTarget: interruptedState === 'undoing' ? original : null, proposal: proposal(),
+    };
+    await engine.save(stuck);
+    await fs.rename(volume, volume + '-offline');
+    assert.equal((await engine.run()).length, 1);
+    assert.equal((await engine.load(id)).state, 'filed');
+    const paused = await engine.load(stuckID);
+    assert.equal(paused.state, interruptedState);
+    assert.match(paused.error, /paused/);
+    await engine.retry(stuckID);
+    const retried = await engine.load(stuckID);
+    assert.equal(retried.state, interruptedState);
+    assert.equal(retried.target, stuck.target);
+    assert.equal(retried.undoTarget, stuck.undoTarget);
+    await fs.rename(volume + '-offline', volume);
+    await engine.run();
+    const finished = await engine.load(stuckID);
+    assert.equal(finished.state, interruptedState === 'publishing' ? 'filed' : 'undone');
+    assert.equal(finished.error, null);
+    assert.deepEqual(await fs.readFile(interruptedState === 'publishing' ? target : original), data);
+    assert.deepEqual(await fs.readFile(path.join(engine.jobDir(stuckID), 'original.pdf')), data);
+    await engine.run();
+    assert.equal((await fs.readdir(path.join(volume, '_Inbox'))).length, interruptedState === 'undoing' ? 1 : 0);
+  });
+
+test('incomplete and malformed records do not hide or block healthy jobs', async (t) => {
+  const { engine, root } = await setup(t);
+  const orphan = '22222222-2222-4222-8222-222222222222';
+  const malformed = '33333333-3333-4333-8333-333333333333';
+  await fs.mkdir(path.join(root, 'drafts', orphan), { recursive: true });
+  await fs.mkdir(engine.jobDir(orphan), { recursive: true });
+  await fs.mkdir(engine.jobDir(malformed), { recursive: true });
+  await fs.writeFile(path.join(engine.jobDir(malformed), 'job.json'), '{broken json');
+  assert.ok((await engine.run()).some((message) => message.includes('unreadable')));
+  assert.equal((await engine.load(id)).state, 'filed');
+  assert.equal((await engine.list()).length, 1);
+  // Even a syntactically valid corrupt record must not break sorting.
+  await atomicJSON(path.join(engine.jobDir(malformed), 'job.json'), { id: malformed, state: 'queued' });
+  assert.equal((await engine.list()).length, 1);
+  assert.equal(await fs.readFile(path.join(engine.jobDir(malformed), 'job.json'), 'utf8'), JSON.stringify({ id: malformed, state: 'queued' }, null, 2));
+});
+
+test('damaged undiscovered export is reported while other exports file; restoring it recovers', async (t) => {
+  const { engine, root, data } = await setup(t);
+  const other = '22222222-2222-4222-8222-222222222222';
+  const folder = path.join(root, 'drafts', other);
+  await fs.mkdir(folder);
+  const manifest = await fs.readFile(path.join(root, 'drafts', id, 'manifest.json'));
+  await fs.writeFile(path.join(folder, 'manifest.json'), manifest);
+  const warnings = await engine.run();
+  assert.ok(warnings.some((message) => message.includes('saved draft')));
+  assert.equal((await engine.load(id)).state, 'filed');
+  await fs.writeFile(path.join(folder, 'export.pdf'), data);
+  await engine.run();
+  assert.equal((await engine.load(other)).state, 'filed');
+  assert.equal((await engine.list()).length, 2);
+  // An archived manifest is not needed once the job and snapshot are durable.
+  await fs.writeFile(path.join(folder, 'manifest.json'), 'broken old manifest');
+  assert.deepEqual(await engine.run(), []);
+});
+
+test('cleanup failure keeps Filed state and never follows an inbox symlink; retry cleans only matching bytes', async (t) => {
+  const { engine, root, destination, original, data } = await setup(t);
+  await engine.discover();
+  const inbox = path.dirname(original), moved = path.join(root, 'MovedInbox');
+  await fs.rename(inbox, moved);
+  await fs.symlink(moved, inbox);
+  await engine.run();
+  let job = await engine.load(id);
+  assert.equal(job.state, 'filed');
+  assert.equal(job.cleanupPending, true);
+  assert.match(job.error, /Filed successfully/);
+  assert.deepEqual(await fs.readFile(job.target), data);
+  assert.deepEqual(await fs.readFile(path.join(moved, 'scan.pdf')), data);
+  await fs.unlink(inbox);
+  await fs.rename(moved, inbox);
+  job = await engine.apply(id);
+  assert.equal(job.state, 'filed');
+  assert.equal(job.cleanupPending, false);
+  assert.equal(job.error, null);
+  assert.equal(await exists(original), false);
+  assert.deepEqual(await fs.readFile(job.target), data);
+  assert.equal((await fs.readdir(path.join(destination, 'Car/Servicing'))).length, 1);
+});

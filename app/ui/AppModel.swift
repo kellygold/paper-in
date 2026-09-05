@@ -17,8 +17,17 @@ final class AppModel: ObservableObject {
   @Published var failure: String?
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
+  private var preferredDuplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
+  @Published var paperMode = AppModel.savedPaperMode(in: UserDefaults())
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
-  @Published var skipBlankBacks = UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? false
+  @Published var skipBlanks = AppModel.savedSkipBlanks(in: UserDefaults())
+  static func savedSkipBlanks(in defaults: UserDefaults) -> Bool {
+    defaults.object(forKey: "skipBlanks") as? Bool
+      ?? defaults.object(forKey: "skipBlankBacks") as? Bool ?? false
+  }
+  static func savedPaperMode(in defaults: UserDefaults) -> ScanPaperMode {
+    ScanPaperMode(rawValue: defaults.string(forKey: "paperMode") ?? "standard") ?? .standard
+  }
   @Published var exporting = false
   @Published var exportPending = false
   @Published var hasRemovedPages = false
@@ -27,6 +36,32 @@ final class AppModel: ObservableObject {
   private(set) var store: DraftStore?
   let demo: Bool
   let root: URL
+  var skippedPageCount: Int {
+    store?.draft.pages.filter { $0.removed && $0.blankSkipped == true }.count ?? 0
+  }
+  var canScanBothSides: Bool {
+    demo ? paperMode != .longPaper : scanner.supportsDuplex(for: paperMode)
+  }
+  var availablePaperModes: [ScanPaperMode] {
+    let modes = demo ? ScanPaperMode.allCases : scanner.paperModes
+    return modes.contains(paperMode) ? modes : [paperMode] + modes
+  }
+  func chooseSides(_ both: Bool) {
+    guard !both || canScanBothSides else { return }
+    preferredDuplex = both
+    duplex = both
+    if !demo { UserDefaults().set(both, forKey: "bothSides") }
+  }
+  func choosePaperMode(_ mode: ScanPaperMode) {
+    paperMode = mode
+    if !demo { UserDefaults().set(mode.rawValue, forKey: "paperMode") }
+    if demo || scanner.connected { duplex = preferredDuplex && canScanBothSides }
+  }
+  func reconcilePaperModes() {
+    guard !demo, scanner.connected else { return }
+    if !scanner.paperModes.contains(paperMode) { choosePaperMode(.standard) }
+    duplex = preferredDuplex && canScanBothSides
+  }
   var canEdit: Bool { store != nil && !scanner.busy && !exporting && !exportPending }
 
   init() {
@@ -52,24 +87,16 @@ final class AppModel: ObservableObject {
     filing = FilingController(root: root, demo: demo)
     scanner = ScannerCatalog.makeSession(
       staging: root.appendingPathComponent("transfers"), connection: savedConnection)
-    do {
-      store = try DraftStore(root: root)
-      if autoCrop && !demo { try store?.cropUnreviewedPages() }
-      if store?.draft.interrupted == true {
-        notice =
-          "The last scan was interrupted. Your saved pages are here; check the last sheet before continuing."
-      }
-      if demo {
+    restoreDraft(autoCrop: autoCrop && !demo)
+    if demo {
+      do {
         try store?.beginCapture(expectedSides: 2)
         try makeSample()
         try makeSample()
         try store?.completeCapture(success: true)
         notice = "Preview mode — no scanner connection"
-      }
+      } catch { failure = error.localizedDescription }
       refresh()
-    } catch {
-      failure =
-        "Couldn’t open the draft: \(error.localizedDescription). Existing files have been preserved."
     }
     scanner.onBegin = { [weak self] options in
       guard let self, let store = self.store, !self.exporting else {
@@ -84,7 +111,7 @@ final class AppModel: ObservableObject {
         throw PaperError("Draft storage isn’t available.")
       }
       try store.ingest(
-        url, dpi: dpi, autoCrop: self.autoCrop, skipBlankBacks: self.skipBlankBacks)
+        url, dpi: dpi, autoCrop: self.autoCrop, skipBlanks: self.skipBlanks)
       self.refresh(selectLast: true)
     }
     scanner.onEnd = { [weak self] success, error in
@@ -94,6 +121,24 @@ final class AppModel: ObservableObject {
       }
       if let error { self.notice = error }
       self.refresh()
+    }
+  }
+  func restoreDraft(autoCrop: Bool) {
+    defer { refresh() }
+    do { store = try DraftStore(root: root) } catch {
+      failure =
+        "Couldn’t open the draft: \(error.localizedDescription). Existing files have been preserved."
+      return
+    }
+    if store?.draft.interrupted == true {
+      notice =
+        "The last scan was interrupted. Your saved pages are here; check the last sheet before continuing."
+    }
+    do {
+      if autoCrop { try store?.cropUnreviewedPages() }
+    } catch {
+      failure =
+        "Your draft is restored, but some pages could not be cropped: \(error.localizedDescription)"
     }
   }
   func refresh(selectLast: Bool = false) {
@@ -107,23 +152,47 @@ final class AppModel: ObservableObject {
   }
   func select(_ id: String?) {
     selected = id
+    sheetPreviews = [:]
     guard let page = pages.first(where: { $0.id == id }) else {
       preview = nil
       return
     }
+    preview = nil
     do {
       preview = try store?.preview(page)
-      sheetPreviews = [:]
       for sibling in selectedSheet?.visible ?? [] {
         sheetPreviews[sibling.id] = try store?.preview(sibling)
       }
     } catch { failure = error.localizedDescription }
   }
+  var selectedPageIndex: Int? { pages.firstIndex { $0.id == selected } }
+  func navigatePage(by offset: Int) {
+    guard let index = selectedPageIndex, pages.indices.contains(index + offset) else { return }
+    select(pages[index + offset].id)
+  }
+  func moveSelectedPage(by offset: Int) {
+    guard canEdit, let store, let id = selected else { return }
+    do {
+      try store.move(id, by: offset)
+      pairedPreview = false
+      refresh()
+      notice = "Page moved. Single page view shows the PDF order."
+    } catch { failure = error.localizedDescription }
+  }
   func edit(_ action: (DraftStore) throws -> Void) {
     guard canEdit, let store else { return }
+    let previousIndex = selectedPageIndex
+    let previousID = selected
+    let previousSheetID = selectedSheet?.id
     do {
       try action(store)
       refresh()
+      if let previousIndex, !pages.isEmpty, !pages.contains(where: { $0.id == previousID }) {
+        let sibling =
+          pairedPreview
+          ? sheets.first(where: { $0.id == previousSheetID })?.visible.first?.id : nil
+        select(sibling ?? pages[min(previousIndex, pages.count - 1)].id)
+      }
     } catch { failure = error.localizedDescription }
   }
   func changeConnection(_ next: ScannerConnection) {
@@ -146,6 +215,7 @@ final class AppModel: ObservableObject {
       return
     }
     scanner.duplex = duplex
+    scanner.paperMode = paperMode
     scanner.scan()
   }
   func save() {

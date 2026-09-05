@@ -12,6 +12,8 @@ final class NoScanRedirects: NSObject, URLSessionTaskDelegate {
 final class ScanXML: NSObject, XMLParserDelegate {
   var values: [String: [String]] = [:]
   private var text = ""
+  private var path: [String] = []
+  var paths: [String: [String]] = [:]
   static func read(_ data: Data) throws -> ScanXML {
     let result = ScanXML()
     let parser = XMLParser(data: data)
@@ -26,7 +28,10 @@ final class ScanXML: NSObject, XMLParserDelegate {
   func parser(
     _ parser: XMLParser, didStartElement elementName: String, namespaceURI: String?,
     qualifiedName: String?, attributes: [String: String]
-  ) { text = "" }
+  ) {
+    path.append(elementName)
+    text = ""
+  }
   func parser(_ parser: XMLParser, foundCharacters string: String) { text += string }
   func parser(
     _ parser: XMLParser, didEndElement elementName: String, namespaceURI: String?,
@@ -34,6 +39,8 @@ final class ScanXML: NSObject, XMLParserDelegate {
   ) {
     let value = text.trimmingCharacters(in: .whitespacesAndNewlines)
     if !value.isEmpty { values[elementName, default: []].append(value) }
+    if !value.isEmpty { paths[path.joined(separator: "/"), default: []].append(value) }
+    path.removeLast()
     text = ""
   }
 }
@@ -44,15 +51,18 @@ final class ESCLClient {
     self.base = base
     let config = URLSessionConfiguration.ephemeral
     config.timeoutIntervalForRequest = 30
-    config.timeoutIntervalForResource = 60
+    config.timeoutIntervalForResource = 180
     config.requestCachePolicy = .reloadIgnoringLocalCacheData
     self.session =
       session ?? URLSession(configuration: config, delegate: NoScanRedirects(), delegateQueue: nil)
   }
-  func request(_ url: URL, method: String = "GET", body: Data? = nil) async throws -> (
-    Data, HTTPURLResponse
-  ) {
+  func request(_ url: URL, method: String = "GET", body: Data? = nil, timeout: TimeInterval = 30)
+    async throws -> (
+      Data, HTTPURLResponse
+    )
+  {
     var request = URLRequest(url: url)
+    request.timeoutInterval = timeout
     request.httpMethod = method
     request.httpBody = body
     if body != nil { request.setValue("text/xml", forHTTPHeaderField: "Content-Type") }
@@ -99,7 +109,8 @@ final class ESCLClient {
     return job
   }
   func page(_ job: URL, to url: URL) async throws {
-    let (data, response) = try await request(job.appendingPathComponent("NextDocument"))
+    let (data, response) = try await request(
+      job.appendingPathComponent("NextDocument"), timeout: 180)
     guard response.statusCode == 200 else { throw Self.httpError(response.statusCode) }
     // Preserve bytes before decoding, including an incomplete response for diagnostics/recovery.
     try data.write(to: url, options: .withoutOverwriting)

@@ -24,6 +24,10 @@ Enabling AI does not opt previously exported PDFs into uploads. A draft that has
 
 The queue retains its own original PDF before analysis. AI errors leave the original and inbox copy intact. Publication and Undo record their intended changes before modifying files so interrupted operations can resume. Existing files are not overwritten; name collisions receive a short ID suffix.
 
+A filing or Undo failure does not block the other documents. In **Saved documents**, restore access to the original destination and use **Retry filing** to resume the same transaction. **Resume queue** also retries interrupted operations. Incomplete or unreadable records are reported or skipped while healthy records remain usable; original files are retained.
+
+If filing succeeds but inbox cleanup fails, the document stays **Filed** with a warning. Restore access to the inbox and use **Retry inbox cleanup**. The app never follows an inbox symlink to delete a file.
+
 Undo restores the retained original and removes a filed copy only if its bytes still match. If you changed the filed copy, it is preserved. Related documents are never automatically merged or deleted.
 
 Completed draft pages, old drafts, and original PDFs are retained. There is no automatic cleanup yet. OS-level power-loss guarantees still depend on the filesystem; retained originals are the recovery fallback.

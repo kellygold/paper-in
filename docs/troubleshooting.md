@@ -28,4 +28,14 @@ Confirm the DS-940DW's mode switch matches **USB** or **Wi-Fi** in Paper In, clo
 
 Completed pages already in the draft are retained. An image that never arrived may need rescanning. When reporting a bug, include the scanner model, macOS/app version, exact action, error message, and a redacted connection log. Do not attach personal document images.
 
-Current capture is A4 at 300 dpi. A long receipt can exceed that acquisition area; automatic cropping does not extend it. Other models and physical scanner-button events are not supported yet.
+For a receipt longer than A4, choose **Paper → Long receipt** before scanning. This requests up to 1.8 m at 300 dpi and scans one side at a time. Close the output guide so the receipt exits straight through; support the paper as it feeds. Return to **A4** for ordinary duplex scans. Long paper is offered only when the connected scanner advertises the required simplex scan area.
+
+Brother's [manual](https://support.brother.com/g/s/id/htmldoc/ads/cv_ds640/uke/PDF/PDF.pdf) lists 1,828.8 mm for single-sided scanning and excludes duplex from Long Paper mode. Our eSCL capability probe reported separate simplex and duplex limits; the app never applies the larger simplex area to a duplex request. A synthetic maximum-length receipt has offline coverage; physical long-paper scanning is still being validated.
+
+Other models and physical scanner-button events are not supported yet.
+
+### Auto paper size and blank pages
+
+**Auto** requests the scanner’s built-in AutoCrop extension only when advertised. It still has a 35.6 cm acquisition limit; select **Long receipt** for longer paper. Built-in cropping is being tested on hardware. If Auto is rejected or crops poorly, choose **A4**; the app will not silently refeed the document. Device-cropped pixels are not available to restore, while the exact received image bytes remain saved.
+
+**Options → Skip blank pages** applies to fronts and backs, including a receipt inserted with its blank side first. Both blank sides may be hidden; the sidebar’s restore control remains available even with no visible pages. New scans only: existing pages are not automatically reclassified.

@@ -32,7 +32,7 @@ struct SheetPreview: View {
           Image(systemName: "doc.badge.ellipsis").font(.largeTitle)
           Text(
             page?.removed == true
-              ? (page?.blankBackSkipped == true ? "Blank back skipped" : "Side removed")
+              ? (page?.blankSkipped == true ? "Blank page skipped" : "Side removed")
               : (model.scanner.busy ? "Waiting for this side…" : "Side not received"))
           if let page, page.removed {
             Text("The original image is still saved.").font(.caption)
