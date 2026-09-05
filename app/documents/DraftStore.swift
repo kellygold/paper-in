@@ -288,7 +288,11 @@ final class DraftStore {
   func restoreLastRemoved() throws {
     try editable()
     var next = draft
-    guard let index = next.pages.lastIndex(where: { $0.removed }) else { return }
+    // A user-removed front must be restored before its automatically skipped back.
+    guard
+      let index = next.pages.lastIndex(where: { $0.removed && $0.blankBackSkipped != true })
+        ?? next.pages.lastIndex(where: { $0.removed })
+    else { return }
     next.pages[index].removed = false
     next.pages[index].blankBackSkipped = nil
     try commit(next)

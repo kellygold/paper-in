@@ -10,15 +10,16 @@ try fm.createDirectory(at: root, withIntermediateDirectories: true)
 defer { try? fm.removeItem(at: root) }
 
 func fixture(
-  _ name: String, background: CGColor = CGColor(gray: 1, alpha: 1),
+  _ name: String, background: CGColor = CGColor(gray: 1, alpha: 1), width: Int = 1000,
+  height: Int = 1400,
   draw: (CGContext) -> Void = { _ in }
 ) throws -> (URL, CGImage) {
   let ctx = CGContext(
-    data: nil, width: 1000, height: 1400, bitsPerComponent: 8,
-    bytesPerRow: 4000, space: CGColorSpaceCreateDeviceRGB(),
+    data: nil, width: width, height: height, bitsPerComponent: 8,
+    bytesPerRow: width * 4, space: CGColorSpaceCreateDeviceRGB(),
     bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)!
   ctx.setFillColor(background)
-  ctx.fill(CGRect(x: 0, y: 0, width: 1000, height: 1400))
+  ctx.fill(CGRect(x: 0, y: 0, width: width, height: height))
   draw(ctx)
   let image = ctx.makeImage()!
   let url = root.appendingPathComponent(name + ".png")
@@ -75,6 +76,16 @@ let (_, lightInk) = try fixture("light-ink", background: CGColor(gray: 0.94, alp
 for image in [printed, faint, edge, colouredInk, lightInk] {
   precondition(!BlankPageDetector.isClearlyBlank(image), "Meaningful marks were hidden")
 }
+let (_, scanSizeFaint) = try fixture("scan-size-faint", width: 2550, height: 3508) { ctx in
+  ctx.setStrokeColor(CGColor(gray: 0.965, alpha: 1))
+  ctx.setLineWidth(4)
+  ctx.move(to: CGPoint(x: 100, y: 200))
+  ctx.addLine(to: CGPoint(x: 300, y: 250))
+  ctx.strokePath()
+}
+precondition(
+  !BlankPageDetector.isClearlyBlank(scanSizeFaint),
+  "Faint ink disappeared during scanner-size downsampling")
 print(
   "PASS tiny ink, faint strokes, edge content, coloured marks and lighter-than-paper ink are retained"
 )
@@ -113,6 +124,12 @@ try restored.ingest(ink, skipBlankBacks: true)
 try restored.ingest(blank, skipBlankBacks: true)
 try restored.completeCapture(success: true)
 let backID = restored.draft.pages[1].id
+let frontID = restored.draft.pages[0].id
+try restored.remove(frontID)
+precondition(restored.visiblePages.isEmpty)
+try restored.restoreLastRemoved()
+precondition(
+  restored.visiblePages.map(\.id) == [frontID] && restored.draft.pages[1].blankBackSkipped == true)
 try restored.restore(backID)
 let resumed = try DraftStore(root: restored.root)
 precondition(resumed.visiblePages.count == 2 && resumed.draft.pages[1].blankBackSkipped == nil)
