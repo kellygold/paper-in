@@ -24,7 +24,8 @@ struct ScanControls: View {
         Picker("Sides", selection: Binding(get: { model.duplex }, set: model.chooseSides)) {
           Text("One").tag(false)
           Text("Both").tag(true).disabled(!model.canScanBothSides)
-        }.pickerStyle(.segmented).frame(width: 165).disabled(!model.canEdit)
+        }.pickerStyle(.segmented).frame(width: 165)
+          .disabled(!model.canEdit || !model.canScanBothSides)
           .help(
             model.canScanBothSides
               ? "Scan one side or both sides of each sheet."

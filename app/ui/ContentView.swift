@@ -102,7 +102,7 @@ struct ContentView: View {
             }
           }
           if model.hasRemovedPages {
-            Button("Restore removed page") { model.edit { try $0.restoreLastRemoved() } }.font(
+            Button("Restore page") { model.edit { try $0.restoreLastRemoved() } }.font(
               .caption
             ).disabled(!model.canEdit)
           }
@@ -124,7 +124,7 @@ struct ContentView: View {
                   : "Scan each sheet, then save them together as one PDF."
               ).foregroundStyle(
                 .secondary)
-              if let last = model.lastExport {
+              if let last = model.lastExport, model.skippedPageCount == 0 {
                 Button("Show saved PDF") { NSWorkspace.shared.activateFileViewerSelecting([last]) }
               }
             }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.white)
