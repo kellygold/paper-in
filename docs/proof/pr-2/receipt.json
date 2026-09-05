@@ -1,0 +1,38 @@
+{
+  "candidate": "b608511a6b20aff9faf7c5b4dd500e55045c1c85",
+  "base": "ccfe416295929c804dd27c9a8f5b9413f184124b",
+  "date": "2026-09-05",
+  "tests": {
+    "native": 46,
+    "worker": 21,
+    "total": 67
+  },
+  "assertions": [
+    "Only explicit duplex backs may be skipped; fronts/simplex/unpaired input remain",
+    "Original image bytes unchanged and optional metadata decodes across restart",
+    "Skipped decision survives interrupted manifest commit via ingest envelope",
+    "Global Restore prioritizes user-removed front over automatically skipped back",
+    "Exact-side restore updates paired previews and two-page export",
+    "Light-on-grey ink and scanner-resolution faint strokes retained"
+  ],
+  "ui": "Generated sample capture callbacks into production AppModel, render skipped side, invoke exact-side restoration and render again; not a physical scanner test",
+  "benchmark_seconds": 1.0618820190429688,
+  "benchmark_scope": "One 2550x3508 white image on development Mac; classifier only, current unoptimized build, excludes crop",
+  "review": {
+    "first_round": "P1 global restore-target priority identified",
+    "fix": "b608511",
+    "second_round": "Timed out within original 8-minute budget; incomplete, not a pass"
+  },
+  "cleanup": {
+    "synthetic_roots_deleted": true,
+    "scanner_requests": 0,
+    "ai_requests": 0,
+    "user_draft_modified": false,
+    "installed_app_replaced": false
+  },
+  "limitations": [
+    "Real DS-940DW blank-back calibration not run",
+    "Classifier adds measured synchronous work on page delivery",
+    "Final independent re-check incomplete"
+  ]
+}

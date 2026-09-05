@@ -1,0 +1,1 @@
+300 dpi white page: blank=true, detector seconds=1.0618820190429688
