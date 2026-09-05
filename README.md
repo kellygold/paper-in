@@ -4,7 +4,7 @@
 
 A small Mac app for turning a stack of paper into PDFs you can find again. Built after one too many “no paper,” “jam,” and “could not connect” messages from the scanner's original software.
 
-Paper In currently supports the **Brother DS-940DW over USB**. It is an independent community project, not a Brother product.
+Paper In currently supports the **Brother DS-940DW over USB**, with experimental Wi-Fi support. It is an independent community project, not a Brother product.
 
 ![Front and back of a sheet displayed together in Paper In. This screenshot uses generated sample pages.](docs/images/paired-preview.png)
 
@@ -43,6 +43,8 @@ The app bundle is currently about 515 MB because it contains both provider runti
 4. Review the pages and click **Save PDF** or press Command-S.
 
 The destination is remembered. Saving starts a fresh document. The scanner's physical Start button is not supported yet; use the app button or Space.
+
+For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
 
 To explore the UI without a scanner:
 
@@ -102,7 +104,7 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 
 ## Current limits
 
-- DS-940DW over USB only. No Wi-Fi, other scanner models, or multi-sheet feeders are advertised as supported.
+- DS-940DW only. Wi-Fi is experimental; one physical duplex scan through the shared backend is verified. Other scanner models and multi-sheet feeders are not yet supported. See [validation](docs/validation.md) for the tested scope.
 - Capture is A4, 300 dpi, colour. Automatic crop handles small items; long receipts and deskew are not implemented.
 - OCR feeds AI filing; PDFs do not yet receive a searchable text layer.
 - Very large exports may briefly pause the interface. Drafts and recovery copies are retained without automatic cleanup.

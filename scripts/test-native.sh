@@ -11,8 +11,11 @@ xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/Documents/mai
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" app/support/Diagnostics.swift tests/app/Connection/LegacyScanner.swift tests/app/Connection/main.swift -o .build/connection-tests
 .build/connection-tests
 
-xcrun swiftc -parse-as-library "${paper_swift[@]}" "${paper_documents[@]}" app/support/Diagnostics.swift app/scanning/ScannerBackend.swift app/scanning/DS940Profile.swift app/scanning/ESCLClient.swift tests/app/ESCL/main.swift -o .build/escl-tests
+xcrun swiftc -parse-as-library "${paper_swift[@]}" "${paper_documents[@]}" app/support/Diagnostics.swift app/scanning/ScannerBackend.swift app/scanning/DS940Profile.swift app/scanning/ESCLScannerProfile.swift app/scanning/ESCLClient.swift tests/app/ESCL/main.swift -o .build/escl-tests
 .build/escl-tests
+
+xcrun swiftc -parse-as-library "${paper_swift[@]}" app/support/*.swift app/scanning/*.swift tests/app/ScannerTransport/main.swift -o .build/scanner-transport-tests
+.build/scanner-transport-tests
 
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/Crop/main.swift -o .build/crop-tests
 .build/crop-tests

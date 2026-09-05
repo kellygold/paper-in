@@ -69,3 +69,18 @@ precondition(!outcome && !session.busy)
 session.pause()
 precondition(!session.connected)
 print("PASS backend reports consumer failure and shared session can pause")
+
+let replacement = FakeBackend(root)
+fake.state.busy = true
+session.replaceBackend(replacement)
+precondition(fake.onImage != nil && replacement.onImage == nil)
+fake.state.busy = false
+session.replaceBackend(replacement)
+precondition(fake.onImage == nil && fake.onCaptureBegan == nil && fake.onCaptureEnded == nil)
+images = []
+session.onPage = { image, _ in images.append(image.lastPathComponent) }
+session.connect()
+session.scan()
+precondition(outcome && images == ["front.jpg", "back.jpg"] && replacement.requested.count == 1)
+print(
+  "PASS switching transport refuses busy capture and preserves shared draft callbacks when idle")

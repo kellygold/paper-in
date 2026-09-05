@@ -1,13 +1,15 @@
 # Architecture
 
-Status: implemented in 0.2.0; hardware compatibility remains DS-940DW USB only.
+Status: 0.3.0 adds experimental Wi-Fi to the DS-940DW USB workflow. Hardware evidence is recorded in [validation](validation.md).
 
 ```mermaid
 flowchart TD
   UI[Native SwiftUI views] --> Session[Shared ScannerSession]
   Session --> Backend[ScannerBackend contract]
-  Backend --> DS[DS940USBBackend + DS940Profile]
-  DS --> ESCL[Generic eSCL transport]
+  Backend --> DS[ESCLScannerBackend]
+  DS --> Profile[ESCLScannerProfile: DS940Profile]
+  DS --> Discovery[ScannerDiscovery: USB or Wi-Fi Bonjour]
+  DS --> ESCL[ESCLClient: shared HTTP/XML transport]
   Session --> Store[DraftStore: originals, sheets, edits, PDF]
   Store --> Manifest[Published export + filing intent]
   Manifest --> Queue[Persistent filing queue]
@@ -28,7 +30,7 @@ Start with [the project map](project-map.md) for a task-by-task guide to the fil
 ## Code map
 
 - `app/scanning/ScannerBackend.swift`: hardware-independent options, capabilities, delivered images and backend contract; shared observable session. The UI depends on the session, not a device implementation.
-- `app/scanning/ScannerCatalog.swift`: supported hardware composition. `DS940Profile` holds model-specific matching and request constraints; `DS940USBBackend` owns discovery/job lifecycle; `ESCLClient` owns generic HTTP/XML transport validation.
+- `app/scanning/ScannerCatalog.swift`: supported hardware composition. `DS940Profile` implements `ESCLScannerProfile` for model matching and request constraints. `ESCLScannerBackend` owns the shared job lifecycle; `ScannerDiscovery` supplies USB or network endpoints; `ESCLClient` owns generic HTTP/XML transport validation.
 - `app/documents/DraftStore.swift`: durable originals, draft manifest, capture IDs/sides, reversible edits and PDF publication. Sheet pairing is preserved even if a side is removed or capture fails. Legacy pages are not inferred into pairs.
 - `app/ui`: application state, window layout, shared page rendering and zoom. `app/documents/SheetGroup.swift` owns physical-sheet grouping.
 - `app/filing`: native settings, catalog reader, Keychain access, worker lifecycle and queue/review UI.
@@ -52,7 +54,7 @@ A provider may use HTTP, an official SDK or a supported local runtime. The gener
 ## Adding a scanner
 
 1. Implement `ScannerBackend`: expose capabilities/state, connect/pause/retry, accept `ScanOptions`, and emit begin/image/end callbacks. Page callbacks must be acknowledged by durable storage before reporting success. Never automatically repeat a physical scan after uncertain delivery.
-2. Register it in `ScannerCatalog`. eSCL devices can reuse `ESCLClient`; device constraints belong in a profile. Other protocols implement the same backend contract.
+2. Register it in `ScannerCatalog`. One-sheet eSCL devices can implement `ESCLScannerProfile` and reuse `ESCLScannerBackend`, discovery and `ESCLClient`. Other acquisition protocols implement the same backend contract. The catalog injects model and transport; the draft and filing layers never branch on either.
 3. Run the shared session contract tests, draft tests and a backend transport suite. Verify real single/duplex captures, empty feeder, jam, unplug/replug and sleep/wake before advertising the model.
 4. A multi-sheet feeder or flatbed may require enriching options/capture metadata; do not assume the DS-940's one-sheet/two-images behavior applies universally.
 

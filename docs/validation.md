@@ -10,7 +10,8 @@ Status: local build verified on 5 September 2026; not a public signed release.
 - 4 eSCL transport scenarios: rejected jobs, foreign job URLs, complete image/PDF delivery, incomplete images and status parsing (some assertions share a scenario).
 - 4 crop scenarios: cards, receipts, blank pages, physical PDF sizes, scanner padding, reversible metadata and unchanged original bytes.
 - 2 legacy ImageCapture connection scenarios retained as regression fixtures.
-- 2 shared scanner-session contract scenarios: capabilities, scan options, ordered pages, consumer storage failure and pause.
+- 3 shared scanner-session contract scenarios: capabilities, scan options, ordered pages, consumer storage failure, pause and transport replacement without losing draft callbacks.
+- 11 scanner transport scenarios: local endpoint validation plus shared USB/Wi-Fi duplex delivery, duplicate-start prevention, missing-back preservation, empty/jammed feeder refusal, wrong-model rejection and stale discovery callbacks.
 - 1 native application-flow scenario: paired selection, per-side edit/removal/restoration, adding another sheet and saving a four-page PDF.
 - 21 worker scenarios: idempotent export discovery, both classification passes, mandatory review, failed/retried analysis, malformed outputs, traversal/symlink rejection, output collisions, interrupted publication/Undo, changed-file preservation, stale locks, corrupted originals, provider registry consistency, both API wire formats, incomplete responses, missing credentials/rate limits and credential-safe errors.
 
@@ -46,7 +47,11 @@ Tests retain generated evidence under `.build/live-*`. This directory is ignored
 
 The paired preview, settings and review screens are checked using demo mode and synthetic pages. Preview artifacts live under `.build` and contain no personal documents.
 
-The 0.1.4 scanner path had real single/duplex DS-940DW captures confirmed. Version 0.2.0 reorganizes that same transport/profile behind a shared scanner interface; its automated tests pass, but a fresh physical capture in the new build still needs the user to feed a sheet. No other model, Wi-Fi, physical Start button, long receipt, unplug/replug or sleep/wake compatibility claim is added by this work.
+The original scanner path had real single/duplex DS-940DW USB captures confirmed. Version 0.3.0 shares that job lifecycle between USB and Wi-Fi discovery. On 5 September 2026, the production Wi-Fi backend, image validation, crop, draft store and PDF exporter captured both sides of a user-loaded sheet and saved a two-page PDF. This used an isolated native harness, not the main window; the scanned content is retained only locally and is not a repository fixture.
+
+The Wi-Fi device initially reported `ScannerAdfJam`; the backend refused to create a job. A physical reboot cleared it to `ScannerAdfLoaded`, after which one explicit capture succeeded. The normal internet route was unchanged. Other models, the physical Start button, long receipts, unplug/replug and sleep/wake remain unverified.
+
+After running the offline tests, `.build/scanner-transport-tests --live-discovery` performs an opt-in, read-only Bonjour/capability check. It never starts a scan or touches the user's draft.
 
 ## Repository organization verification
 

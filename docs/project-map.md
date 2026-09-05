@@ -24,7 +24,8 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Understand draft recovery or PDF creation | [app/documents/DraftStore.swift](../app/documents/DraftStore.swift) |
 | Change page pairing or cropping | [app/documents/SheetGroup.swift](../app/documents/SheetGroup.swift), [AutoCrop.swift](../app/documents/AutoCrop.swift) |
 | Add a scanner | [app/scanning/ScannerBackend.swift](../app/scanning/ScannerBackend.swift), then [ScannerCatalog.swift](../app/scanning/ScannerCatalog.swift) |
-| Debug the Brother connection | [app/scanning/DS940USBBackend.swift](../app/scanning/DS940USBBackend.swift) |
+| Debug scanner discovery or switch USB/Wi-Fi | [app/scanning/ScannerDiscovery.swift](../app/scanning/ScannerDiscovery.swift) |
+| Debug capture or add an eSCL model profile | [app/scanning/ESCLScannerBackend.swift](../app/scanning/ESCLScannerBackend.swift), [ESCLScannerProfile.swift](../app/scanning/ESCLScannerProfile.swift) |
 | Change AI settings or the review screen | [app/filing/FilingViews.swift](../app/filing/FilingViews.swift) |
 | Understand how Swift starts the AI process | [app/filing/FilingController.swift](../app/filing/FilingController.swift) |
 | Change the naming instructions or AI response format | [ai/schema.mjs](../ai/schema.mjs) |

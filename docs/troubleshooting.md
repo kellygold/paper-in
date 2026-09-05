@@ -24,8 +24,8 @@ Check that Node.js 22+ is installed. The app can detect common Homebrew and nvm 
 
 ## Scanner cannot connect, reports no paper, or ends without an image
 
-Confirm the DS-940DW is in USB mode, close other scanner applications, and inspect the scanner's fault indicators and paper path. Use the manufacturer's instructions to resolve a reported jam. Then use the app's explicit connection retry. Do not assume a successful insertion movement means a complete scan was captured.
+Confirm the DS-940DW's mode switch matches **USB** or **Wi-Fi** in Paper In, close other scanner applications, and inspect the scanner's fault indicators and paper path. For network setup and discovery, see [Wi-Fi setup](wifi.md). Use the manufacturer's instructions to resolve a reported jam. Then use the app's explicit connection retry. Do not assume a successful insertion movement means a complete scan was captured.
 
 Completed pages already in the draft are retained. An image that never arrived may need rescanning. When reporting a bug, include the scanner model, macOS/app version, exact action, error message, and a redacted connection log. Do not attach personal document images.
 
-Current capture is A4 at 300 dpi. A long receipt can exceed that acquisition area; automatic cropping does not extend it. Other models, Wi-Fi, and physical scanner-button events are not supported yet.
+Current capture is A4 at 300 dpi. A long receipt can exceed that acquisition area; automatic cropping does not extend it. Other models and physical scanner-button events are not supported yet.

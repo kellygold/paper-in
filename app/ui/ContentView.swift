@@ -142,6 +142,19 @@ struct ContentView: View {
       Divider()
       VStack(alignment: .leading, spacing: 12) {
         FilingToolbar(filing: model.filing)
+        HStack(spacing: 10) {
+          Picker("Connection", selection: $model.connection) {
+            ForEach(ScannerConnection.allCases) { connection in
+              Text(connection.title).tag(connection)
+            }
+          }.pickerStyle(.segmented).frame(width: 180)
+            .disabled(scanner.busy || model.exporting)
+            .onChange(of: model.connection) { _, value in model.changeConnection(value) }
+          if model.connection == .network {
+            Text("Scanner and Mac must be on the same local network.").font(.caption)
+              .foregroundStyle(.secondary)
+          }
+        }
         if let failure = model.failure {
           Label(failure, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(
             Color(red: 0.65, green: 0.20, blue: 0.12)

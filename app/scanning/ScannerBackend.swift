@@ -41,7 +41,7 @@ protocol ScannerBackend: AnyObject {
 /// One session drives every scanner UI, regardless of backend or device vendor.
 final class ScannerSession: ObservableObject {
   @Published private(set) var state: ScannerSnapshot
-  private let backend: any ScannerBackend
+  private var backend: any ScannerBackend
   private var subscription: AnyCancellable?
   var onBegin: ((ScanOptions) throws -> Void)?
   var onPage: ((URL, Double) throws -> Void)?
@@ -58,6 +58,21 @@ final class ScannerSession: ObservableObject {
   init(backend: any ScannerBackend) {
     self.backend = backend
     state = backend.snapshot
+    bindBackend()
+  }
+  /// Switch transport without replacing the shared session or touching the draft.
+  func replaceBackend(_ next: any ScannerBackend) {
+    guard !backend.snapshot.busy else { return }
+    backend.pause()
+    backend.onCaptureBegan = nil
+    backend.onImage = nil
+    backend.onCaptureEnded = nil
+    subscription = nil
+    backend = next
+    bindBackend()
+    refresh()
+  }
+  private func bindBackend() {
     subscription = backend.changes.receive(on: DispatchQueue.main).sink { [weak self] _ in
       self?.refresh()
     }

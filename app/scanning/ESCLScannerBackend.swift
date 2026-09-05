@@ -1,14 +1,17 @@
 import Combine
 import Foundation
-import dnssd
 
-final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
-  private let profile = DS940Profile()
+/// Shared job lifecycle for USB-proxied and network eSCL scanners.
+final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
+  private let profile: any ESCLScannerProfile
+  private let connection: ScannerConnection
+  private let discovery: any ScannerDiscovery
+  private let makeClient: (URL) -> ESCLClient
   var changes: AnyPublisher<Void, Never> { objectWillChange.eraseToAnyPublisher() }
   var snapshot: ScannerSnapshot {
     ScannerSnapshot(
       name: profile.name, message: message, connected: connected, busy: busy, listening: listening,
-      capabilities: ScannerCapabilities(duplex: supportsDuplex, resolutions: [300]))
+      capabilities: ScannerCapabilities(duplex: supportsDuplex, resolutions: profile.resolutions))
   }
   @Published private(set) var message = "Scanner paused"
   @Published private(set) var connected = false
@@ -21,14 +24,20 @@ final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
   var onCaptureEnded: ((Bool, String?) -> Void)?
   let diagnostics: Diagnostics
   private let staging: URL
-  private var browseRef: DNSServiceRef?
-  private var resolveRef: DNSServiceRef?
   private var client: ESCLClient?
   private var timer: Timer?
   private var generation = UUID()
   private var stopping = false
-  init(staging: URL) {
+  init(
+    staging: URL, profile: any ESCLScannerProfile, connection: ScannerConnection,
+    discovery: (any ScannerDiscovery)? = nil,
+    makeClient: @escaping (URL) -> ESCLClient = { ESCLClient(base: $0) }
+  ) {
     self.staging = staging
+    self.profile = profile
+    self.connection = connection
+    self.discovery = discovery ?? BonjourScannerDiscovery(connection: connection)
+    self.makeClient = makeClient
     diagnostics = Diagnostics(
       directory: staging.deletingLastPathComponent().appendingPathComponent("Diagnostics"))
     super.init()
@@ -37,45 +46,27 @@ final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
     guard !listening, !busy else { return }
     generation = UUID()
     listening = true
-    message = "Looking for your USB scanner…"
-    diagnostics.event("usb_discovery_started")
-    let context = Unmanaged.passUnretained(self).toOpaque()
-    let result = DNSServiceBrowse(
-      &browseRef, 0, kDNSServiceInterfaceIndexLocalOnly, "_ippusb._tcp", "local.",
-      { _, flags, interface, error, name, type, domain, context in
-        guard let context, let name, let type, let domain else { return }
-        let owner = Unmanaged<DS940USBBackend>.fromOpaque(context).takeUnretainedValue()
-        guard error == 0, flags & kDNSServiceFlagsAdd != 0, owner.listening,
-          owner.resolveRef == nil,
-          owner.profile.matchesService(String(cString: name))
-        else { return }
-        owner.diagnostics.event("usb_service_found")
-        let code = DNSServiceResolve(
-          &owner.resolveRef, 0, interface, name, type, domain,
-          { _, _, _, error, _, host, port, _, _, context in
-            guard let context, let host else { return }
-            let owner = Unmanaged<DS940USBBackend>.fromOpaque(context).takeUnretainedValue()
-            guard error == 0, owner.listening,
-              ["localhost.", "localhost", "localhost.local."].contains(String(cString: host))
-            else { return }
-            owner.resolved(port: Int(UInt16(bigEndian: port)))
-          }, context)
-        if code == 0, let ref = owner.resolveRef {
-          DNSServiceSetDispatchQueue(ref, DispatchQueue.main)
-        } else {
-          owner.diagnostics.event("usb_resolution_failed", ["code": code])
-        }
-      }, context)
-    guard result == 0, let ref = browseRef else {
-      pause()
-      message = "USB discovery failed (\(result))."
-      return
-    }
-    DNSServiceSetDispatchQueue(ref, DispatchQueue.main)
+    message = "Looking for your \(connection.title) scanner…"
+    diagnostics.event("discovery_started", ["connection": connection.rawValue])
+    let token = generation
+    discovery.start(
+      matching: { [profile] in profile.matchesService($0) },
+      onEndpoint: { [weak self] endpoint in
+        guard let self, self.listening, self.generation == token else { return }
+        self.resolved(endpoint: endpoint)
+      },
+      onError: { [weak self] error in
+        guard let self, self.generation == token else { return }
+        self.pause()
+        self.message = error.localizedDescription
+      })
     timer = Timer.scheduledTimer(withTimeInterval: 12, repeats: false) { [weak self] _ in
       guard let self, !self.connected else { return }
       self.pause()
-      self.message = "USB scanner wasn’t found. Check its power and cable, then click Connect."
+      self.message =
+        self.connection == .usb
+        ? "USB scanner wasn’t found. Check its power and cable, then click Connect."
+        : "Wi-Fi scanner wasn’t found. Put the scanner in Wi-Fi mode and connect it to the same network as this Mac."
     }
   }
   func retry() {
@@ -98,36 +89,30 @@ final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
     listening = false
     message = "Scanner paused"
   }
-  private func stopDiscovery() {
-    if let ref = browseRef {
-      DNSServiceRefDeallocate(ref)
-      browseRef = nil
-    }
-    if let ref = resolveRef {
-      DNSServiceRefDeallocate(ref)
-      resolveRef = nil
-    }
-  }
-  private func resolved(port: Int) {
-    guard port > 0, client == nil else { return }
-    diagnostics.event("usb_service_resolved", ["port": port])
+  private func stopDiscovery() { discovery.stop() }
+  private func resolved(endpoint: ScannerEndpoint) {
+    guard client == nil else { return }
+    diagnostics.event("service_resolved", ["connection": connection.rawValue])
     let token = generation
-    let client = ESCLClient(base: URL(string: "http://localhost:\(port)/eSCL")!)
+    let client = makeClient(endpoint.base)
     self.client = client
-    // Deallocate on the same queue after the DNS callback has returned.
-    DispatchQueue.main.async { [weak self] in self?.stopDiscovery() }
+    // DNS callbacks finish before their references are released.
+    DispatchQueue.main.async { [weak self] in
+      guard let self, self.generation == token else { return }
+      self.stopDiscovery()
+    }
     Task { @MainActor in
       do {
         let caps = try await client.xml("ScannerCapabilities")
         guard self.generation == token else { return }
         guard self.profile.matchesCapabilities(caps) else {
-          throw PaperError("The USB endpoint did not identify as your DS-940DW.")
+          throw PaperError("The endpoint did not identify as \(self.profile.name).")
         }
         self.supportsDuplex = caps.values["AdfOption"]?.contains("Duplex") == true
         self.connected = true
         self.timer?.invalidate()
-        self.message = "Ready — insert a sheet and press Scan"
-        self.diagnostics.event("usb_connected", ["port": port])
+        self.message = "Ready over \(self.connection.title) — insert a sheet and press Scan"
+        self.diagnostics.event("scanner_connected", ["connection": self.connection.rawValue])
       } catch {
         guard self.generation == token else { return }
         self.pause()
@@ -137,8 +122,9 @@ final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
   }
   func scan(options: ScanOptions) {
     guard connected, listening, !busy, let client else { return }
-    guard options.dpi == 300 else {
-      message = "This scanner profile currently supports 300 dpi."
+    guard profile.resolutions.contains(options.dpi) else {
+      message =
+        "Choose a supported resolution: \(profile.resolutions.map(String.init).joined(separator: ", ")) dpi."
       return
     }
     busy = true
@@ -154,39 +140,46 @@ final class DS940USBBackend: NSObject, ObservableObject, ScannerBackend {
         let status = try await client.xml("ScannerStatus")
         let state = status.values["State"]?.first ?? "Unknown"
         let feeder = status.values["AdfState"]?.first ?? "Unknown"
-        self.diagnostics.event("usb_status", ["state": state, "feeder": feeder])
+        self.diagnostics.event("scanner_status", ["state": state, "feeder": feeder])
         guard !self.stopping else { throw PaperError("Scan stopped before starting.") }
         guard state == "Idle" else {
           throw PaperError(
             "Scanner reports \(state). Check its fault light and jam cover, then retry.")
         }
         guard feeder == "ScannerAdfLoaded" else {
-          throw PaperError(
-            "Scanner reports \(feeder). Reinsert the sheet and check its fault light.")
+          if feeder == "ScannerAdfJam" {
+            throw PaperError(
+              "Scanner reports a paper jam. Open the top cover, remove the sheet, and close the cover. If the fault light is off but this persists, restart the scanner."
+            )
+          }
+          if feeder == "ScannerAdfEmpty" {
+            throw PaperError("No paper is loaded. Insert a sheet, then reconnect and scan.")
+          }
+          throw PaperError("Scanner reports \(feeder). Check its fault light and paper path.")
         }
         let folder = self.staging.appendingPathComponent(UUID().uuidString)
         try FileManager().createDirectory(at: folder, withIntermediateDirectories: true)
-        try self.onCaptureBegan?(ScanOptions(duplex: twoSides))
+        try self.onCaptureBegan?(ScanOptions(duplex: twoSides, dpi: options.dpi))
         began = true
         self.message = "Scanning…"
-        self.diagnostics.event("usb_scan_requested", ["duplex": twoSides, "dpi": 300])
+        self.diagnostics.event("scan_requested", ["duplex": twoSides, "dpi": options.dpi])
         let job = try await client.create(
-          settings: self.profile.settings(options: ScanOptions(duplex: twoSides)))
+          settings: self.profile.settings(options: ScanOptions(duplex: twoSides, dpi: options.dpi)))
         ownedJob = job
-        self.diagnostics.event("usb_scan_accepted", ["http_status": 201])
+        self.diagnostics.event("scan_accepted", ["http_status": 201])
         for index in 0..<(twoSides ? 2 : 1) {
           if index > 0 && self.stopping {
             throw PaperError("Stopped after the front side. Completed pages are saved.")
           }
           let page = folder.appendingPathComponent("page-\(index + 1).jpg")
           try await client.page(job, to: page)
-          try self.onImage?(CapturedImage(url: page, dpi: 300))
+          try self.onImage?(CapturedImage(url: page, dpi: Double(options.dpi)))
           received += 1
           self.diagnostics.event("page_saved", ["received_files": received])
         }
       } catch {
         failure = error.localizedDescription
-        self.diagnostics.event("usb_scan_failed", error: error)
+        self.diagnostics.event("scan_failed", error: error)
       }
       if let job = ownedJob {
         do { try await client.close(job) } catch {

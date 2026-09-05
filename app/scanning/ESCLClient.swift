@@ -1,7 +1,7 @@
 import Foundation
 import ImageIO
 
-// Local USB proxy only. Never follow a scanner-supplied redirect to another host.
+// USB and network scanning share the same origin boundary. Never follow redirects.
 final class NoScanRedirects: NSObject, URLSessionTaskDelegate {
   func urlSession(
     _ session: URLSession, task: URLSessionTask,
@@ -58,7 +58,7 @@ final class ESCLClient {
     if body != nil { request.setValue("text/xml", forHTTPHeaderField: "Content-Type") }
     let (data, response) = try await session.data(for: request)
     guard let response = response as? HTTPURLResponse else {
-      throw PaperError("No HTTP response from the USB scanner.")
+      throw PaperError("No HTTP response from the scanner.")
     }
     return (data, response)
   }
