@@ -5,6 +5,10 @@ cd "$(dirname "$0")/.."
 [[ "$(uname -m)" == arm64 && "${PAPER_IN_ARCH:-arm64}" == arm64 ]] || { echo 'This DMG target is Apple Silicon (arm64) only.' >&2; exit 1; }
 : "${PAPER_IN_SIGN_IDENTITY:?Set PAPER_IN_SIGN_IDENTITY to your Developer ID Application identity. Use build.sh for local ad-hoc builds.}"
 : "${PAPER_IN_NOTARY_PROFILE:?Set PAPER_IN_NOTARY_PROFILE to a notarytool Keychain profile.}"
+paper_notarize() {
+  xcrun notarytool submit "$1" --keychain-profile "$PAPER_IN_NOTARY_PROFILE" --wait --timeout 30m --output-format json > "$2"
+  /usr/bin/plutil -extract status raw -o - "$2" | /usr/bin/grep -qx Accepted
+}
 ./build.sh
 paper_version=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' app/Info.plist)
 paper_node_version=22.23.2
@@ -34,6 +38,14 @@ codesign --force --sign "$PAPER_IN_SIGN_IDENTITY" --options runtime --timestamp 
 codesign --force --sign "$PAPER_IN_SIGN_IDENTITY" --options runtime --timestamp "$paper_app"
 codesign --verify --deep --strict "$paper_app"
 [[ "$("$paper_app/Contents/Resources/Runtime/bin/node" --version)" == "v${paper_node_version}" ]]
+# Staple the app before building the DMG, so the copied app carries its own ticket.
+paper_payload="$PWD/.build/dist/Paper-In-${paper_version}-arm64.app.unnotarized.zip"
+ditto -c -k --keepParent "$paper_app" "$paper_payload"
+paper_notarize "$paper_payload" "$PWD/.build/dist/Paper-In-${paper_version}-arm64.app.notary.json"
+xcrun stapler staple "$paper_app"
+xcrun stapler validate "$paper_app"
+syspolicy_check distribution "$paper_app"
+rm "$paper_payload"
 ln -s /Applications "$paper_stage/volume/Applications"
 cp site/install.html "$paper_stage/volume/Start Here.html"
 paper_dmg="$PWD/.build/dist/Paper-In-${paper_version}-arm64.dmg"
@@ -44,8 +56,7 @@ codesign --force --sign "$PAPER_IN_SIGN_IDENTITY" --timestamp "$paper_candidate"
 hdiutil verify "$paper_candidate"
 # Keep an unaccepted candidate under a distinct name, never the release filename.
 # A timeout leaves the submitted file and receipt available for inspection/resume.
-xcrun notarytool submit "$paper_candidate" --keychain-profile "$PAPER_IN_NOTARY_PROFILE" --wait --timeout 30m --output-format json > "$paper_receipt"
-/usr/bin/plutil -extract status raw -o - "$paper_receipt" | /usr/bin/grep -qx Accepted
+paper_notarize "$paper_candidate" "$paper_receipt"
 xcrun stapler staple "$paper_candidate"
 xcrun stapler validate "$paper_candidate"
 codesign --verify --strict "$paper_candidate"
