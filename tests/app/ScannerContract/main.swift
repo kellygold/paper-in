@@ -84,3 +84,9 @@ session.scan()
 precondition(outcome && images == ["front.jpg", "back.jpg"] && replacement.requested.count == 1)
 print(
   "PASS switching transport refuses busy capture and preserves shared draft callbacks when idle")
+
+session.duplex = false
+session.paperMode = .longPaper
+session.scan()
+precondition(replacement.requested.last == ScanOptions(paperMode: .longPaper))
+print("PASS shared scanner session preserves long-paper options")

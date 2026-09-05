@@ -1,13 +1,26 @@
 import Combine
 import Foundation
 
+enum ScanPaperMode: String, CaseIterable, Identifiable {
+  case standard, longPaper
+  var id: String { rawValue }
+  var title: String { self == .standard ? "Standard (A4)" : "Long paper" }
+}
+
 struct ScanOptions: Equatable {
   var duplex = false
   var dpi = 300
+  var paperMode: ScanPaperMode = .standard
 }
 struct ScannerCapabilities: Equatable {
   var duplex: Bool
   var resolutions: [Int]
+  var paperModes: [ScanPaperMode] = [.standard]
+  var duplexPaperModes: [ScanPaperMode] = [.standard]
+
+  func supportsDuplex(for mode: ScanPaperMode) -> Bool {
+    duplex && duplexPaperModes.contains(mode)
+  }
 }
 struct ScannerSnapshot {
   var name: String
@@ -47,6 +60,11 @@ final class ScannerSession: ObservableObject {
   var onPage: ((URL, Double) throws -> Void)?
   var onEnd: ((Bool, String?) -> Void)?
   var duplex = false
+  var paperMode: ScanPaperMode = .standard
+  var paperModes: [ScanPaperMode] { state.capabilities.paperModes }
+  func supportsDuplex(for mode: ScanPaperMode) -> Bool {
+    state.capabilities.supportsDuplex(for: mode)
+  }
   var message: String { state.message }
   var scannerName: String { state.name }
   var connected: Bool { state.connected }
@@ -97,7 +115,7 @@ final class ScannerSession: ObservableObject {
     refresh()
   }
   func scan() {
-    backend.scan(options: ScanOptions(duplex: duplex))
+    backend.scan(options: ScanOptions(duplex: duplex, paperMode: paperMode))
     refresh()
   }
 }

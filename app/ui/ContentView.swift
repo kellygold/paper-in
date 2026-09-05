@@ -221,9 +221,19 @@ struct ContentView: View {
               .system(size: 13, weight: .medium)
             ).textSelection(.enabled)
             HStack(spacing: 6) {
-              Text("Up to A4 · 300 dpi · Colour").font(.caption).foregroundStyle(.secondary)
+              Picker("Paper", selection: $model.paperMode) {
+                ForEach(model.demo ? ScanPaperMode.allCases : scanner.paperModes) { mode in
+                  Text(mode.title).tag(mode)
+                }
+              }.frame(width: 185).disabled(!model.canEdit)
+                .onChange(of: model.paperMode) { _, mode in
+                  if !scanner.supportsDuplex(for: mode) { model.duplex = false }
+                }
+              Text("300 dpi · Colour").font(.caption).foregroundStyle(.secondary)
               Toggle("Both sides", isOn: $model.duplex).toggleStyle(.checkbox).font(.caption)
-                .disabled(!model.canEdit || (!model.demo && !scanner.supportsDuplex))
+                .disabled(
+                  !model.canEdit || (!model.demo && !scanner.supportsDuplex(for: model.paperMode))
+                )
                 .onChange(of: model.duplex) { _, value in
                   scanner.duplex = value
                   if !model.demo { UserDefaults().set(value, forKey: "bothSides") }
@@ -233,6 +243,12 @@ struct ContentView: View {
                 .onChange(of: model.autoCrop) { _, value in
                   if !model.demo { UserDefaults().set(value, forKey: "autoCrop") }
                 }
+            }
+            if model.paperMode == .longPaper {
+              Text(
+                "One side at a time · Up to 1.8 m · Close the output guide for a straight paper path."
+              )
+              .font(.caption).foregroundStyle(.secondary)
             }
             if !model.demo && !scanner.buttonObserved {
               Text("Use Scan or Space to add a sheet.").font(.system(size: 10)).foregroundStyle(
@@ -278,6 +294,9 @@ struct ContentView: View {
     }
     .frame(minWidth: 900, minHeight: 660)
     .background(Color(red: 0.98, green: 0.975, blue: 0.96))
+    .onChange(of: scanner.paperModes) { _, modes in
+      if !modes.contains(model.paperMode) { model.paperMode = .standard }
+    }
     .onAppear { renderIfRequested() }
   }
   private func renderIfRequested() {

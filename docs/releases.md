@@ -1,5 +1,11 @@
 # Release notes
 
+## 0.3.5 — 6 September 2026
+
+- Adds **Paper → Long paper** for receipts up to 1.8 m, where advertised by the scanner. Selecting it turns off Both sides and shows straight-through paper-path guidance. Standard A4 duplex remains available.
+- Carries paper mode through the shared scanner session and USB/Wi-Fi backend; rejects unsupported combinations before creating a scan job. Image transfers have a longer timeout.
+- Tests cover capability scoping, both transports, option forwarding, and a maximum-length synthetic receipt through crop, restart, preview and PDF export. Physical long-paper validation remains pending.
+
 ## 0.3.4 — 6 September 2026
 
 - Single-page view lists each front and back separately and adds Previous/Next navigation. Removing a back in paired view stays on the same sheet.

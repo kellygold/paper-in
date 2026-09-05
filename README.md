@@ -112,7 +112,7 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 ## Current limits
 
 - DS-940DW only. Wi-Fi is experimental; one physical duplex scan through the shared backend is verified. Other scanner models and multi-sheet feeders are not yet supported. See [validation](docs/validation.md) for the tested scope.
-- Capture is A4, 300 dpi, colour. Automatic crop handles small items; long receipts and deskew are not implemented.
+- Capture is 300 dpi, colour. Choose **Standard (A4)** or **Long paper** for receipts up to 1.8 m when the connection advertises support. Long paper scans one side at a time; close the output guide so it feeds straight through. Automatic crop keeps the PDF sized to the item. Deskew is not implemented. Long-paper hardware validation is in progress.
 - OCR feeds AI filing; PDFs do not yet receive a searchable text layer.
 - Very large exports may briefly pause the interface. Drafts and recovery copies are retained without automatic cleanup.
 - AI can misread or misclassify documents. Its second check uses the same provider, and confidence is a heuristic. Review and Undo remain available.

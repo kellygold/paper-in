@@ -17,6 +17,7 @@ final class AppModel: ObservableObject {
   @Published var failure: String?
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
+  @Published var paperMode: ScanPaperMode = .standard
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
   @Published var skipBlankBacks = UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? false
   @Published var exporting = false
@@ -160,6 +161,7 @@ final class AppModel: ObservableObject {
       return
     }
     scanner.duplex = duplex
+    scanner.paperMode = paperMode
     scanner.scan()
   }
   func save() {

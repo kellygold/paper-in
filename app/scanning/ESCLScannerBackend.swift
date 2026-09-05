@@ -11,13 +11,14 @@ final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
   var snapshot: ScannerSnapshot {
     ScannerSnapshot(
       name: profile.name, message: message, connected: connected, busy: busy, listening: listening,
-      capabilities: ScannerCapabilities(duplex: supportsDuplex, resolutions: profile.resolutions))
+      capabilities: capabilities)
   }
   @Published private(set) var message = "Scanner paused"
   @Published private(set) var connected = false
   @Published private(set) var busy = false
   @Published private(set) var listening = false
-  @Published private(set) var supportsDuplex = false
+  private var capabilities = ScannerCapabilities(duplex: false, resolutions: [300])
+  var supportsDuplex: Bool { capabilities.duplex }
   let buttonObserved = false
   var onCaptureBegan: ((ScanOptions) throws -> Void)?
   var onImage: ((CapturedImage) throws -> Void)?
@@ -108,7 +109,7 @@ final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
         guard self.profile.matchesCapabilities(caps) else {
           throw PaperError("The endpoint did not identify as \(self.profile.name).")
         }
-        self.supportsDuplex = caps.values["AdfOption"]?.contains("Duplex") == true
+        self.capabilities = self.profile.capabilities(from: caps)
         self.connected = true
         self.timer?.invalidate()
         self.message = "Ready over \(self.connection.title) — insert a sheet and press Scan"
@@ -127,9 +128,18 @@ final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
         "Choose a supported resolution: \(profile.resolutions.map(String.init).joined(separator: ", ")) dpi."
       return
     }
+    guard capabilities.paperModes.contains(options.paperMode) else {
+      message =
+        "This connection does not advertise support for the selected paper size. Choose Standard or reconnect."
+      return
+    }
+    guard !options.duplex || capabilities.supportsDuplex(for: options.paperMode) else {
+      message = "This paper size supports one side at a time. Turn off Both sides before scanning."
+      return
+    }
     busy = true
     stopping = false
-    let twoSides = options.duplex && supportsDuplex
+    let twoSides = options.duplex
     message = "Checking the scanner…"
     Task { @MainActor in
       var ownedJob: URL?
@@ -159,12 +169,14 @@ final class ESCLScannerBackend: NSObject, ObservableObject, ScannerBackend {
         }
         let folder = self.staging.appendingPathComponent(UUID().uuidString)
         try FileManager().createDirectory(at: folder, withIntermediateDirectories: true)
-        try self.onCaptureBegan?(ScanOptions(duplex: twoSides, dpi: options.dpi))
+        try self.onCaptureBegan?(options)
         began = true
         self.message = "Scanning…"
-        self.diagnostics.event("scan_requested", ["duplex": twoSides, "dpi": options.dpi])
+        self.diagnostics.event(
+          "scan_requested",
+          ["duplex": twoSides, "dpi": options.dpi, "paper_mode": options.paperMode.rawValue])
         let job = try await client.create(
-          settings: self.profile.settings(options: ScanOptions(duplex: twoSides, dpi: options.dpi)))
+          settings: self.profile.settings(options: options))
         ownedJob = job
         self.diagnostics.event("scan_accepted", ["http_status": 201])
         for index in 0..<(twoSides ? 2 : 1) {
