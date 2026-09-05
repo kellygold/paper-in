@@ -1,0 +1,13 @@
+{
+  "name": "paper-in-worker",
+  "version": "0.2.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "dependencies": {
+    "@anthropic-ai/claude-agent-sdk": "0.3.261",
+    "@openai/codex-sdk": "0.153.4"
+  }
+}

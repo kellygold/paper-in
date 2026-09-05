@@ -2,22 +2,16 @@
 set -euo pipefail
 cd "$(dirname "$0")"
 mkdir -p .build
-SDK=/Library/Developer/CommandLineTools/SDKs/MacOSX15.5.sdk
-# Local Clang VFS overlay avoids duplicate SwiftBridging module maps in this CLT install.
-# No system files or global toolchain selections are changed.
-python3 - <<'PY'
-from pathlib import Path
-import json
-p=Path('.build').resolve()
-(p/'empty.modulemap').write_text('')
-(p/'compiler-overlay.json').write_text(json.dumps({'version':0,'roots':[{'type':'file','name':'/Library/Developer/CommandLineTools/usr/include/swift/module.modulemap','external-contents':str(p/'empty.modulemap')}]}))
-PY
-APP="$PWD/.build/Paper In.app"
-mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-xcrun swiftc -swift-version 5 -sdk "$SDK" -target arm64-apple-macosx14.0 \
-  -vfsoverlay "$PWD/.build/compiler-overlay.json" -module-cache-path "$PWD/.build/module-cache" \
-  Sources/ESCL.swift Sources/AutoCrop.swift Sources/DraftStore.swift Sources/Diagnostics.swift Sources/App.swift \
-  -o "$APP/Contents/MacOS/PaperIn"
-cp Info.plist "$APP/Contents/Info.plist"
-codesign --force --sign - "$APP"
-echo "Built $APP"
+source scripts/toolchain.sh
+if [[ ! -d Worker/node_modules ]]; then
+    echo 'Installing pinned AI worker dependencies locally…'
+    (cd Worker && npm ci --ignore-scripts)
+fi
+paper_app="$PWD/.build/Paper In.app"
+mkdir -p "$paper_app/Contents/MacOS" "$paper_app/Contents/Resources"
+xcrun swiftc "${paper_swift[@]}" Sources/App.swift Sources/Scanning/*.swift Sources/Imaging/*.swift Sources/Storage/*.swift Sources/Support/*.swift Sources/UI/*.swift Sources/Preview/*.swift Sources/Filing/*.swift -o "$paper_app/Contents/MacOS/PaperIn"
+xcrun clang -fobjc-arc -isysroot "$paper_sdk" -mmacosx-version-min=14.0 -arch "$paper_arch" Helpers/ocr.m -framework Foundation -framework AppKit -framework PDFKit -framework Vision -o "$paper_app/Contents/Resources/PaperOCR"
+rsync -a --delete --exclude test Worker/ "$paper_app/Contents/Resources/Worker/"
+cp Info.plist "$paper_app/Contents/Info.plist"
+codesign --force --deep --sign - "$paper_app"
+echo "Built $paper_app"

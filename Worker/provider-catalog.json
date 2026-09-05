@@ -1,0 +1,30 @@
+[
+  {
+    "id": "codex",
+    "name": "Codex · existing login",
+    "authentication": "runtime",
+    "requiresModel": false,
+    "help": "Uses the official Codex runtime and its existing login. Run codex login first if needed."
+  },
+  {
+    "id": "claudeSDK",
+    "name": "Claude · Agent SDK / existing login",
+    "authentication": "runtime",
+    "requiresModel": false,
+    "help": "Uses the official Claude Agent SDK and your existing Claude Code login. Run claude auth login first if needed. Subscription eligibility and limits are controlled by Anthropic."
+  },
+  {
+    "id": "openaiAPI",
+    "name": "OpenAI · API key",
+    "authentication": "apiKey",
+    "requiresModel": true,
+    "help": "Uses your OpenAI API key. Usage is billed separately from a ChatGPT subscription."
+  },
+  {
+    "id": "anthropicAPI",
+    "name": "Anthropic · API key",
+    "authentication": "apiKey",
+    "requiresModel": true,
+    "help": "Uses your Anthropic API key. Usage is billed separately from a Claude subscription."
+  }
+]

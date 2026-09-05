@@ -1,0 +1,241 @@
+import AppKit
+import PDFKit
+import SwiftUI
+
+struct ContentView: View {
+  @ObservedObject var model: AppModel
+  @ObservedObject var scanner: ScannerSession
+  private let green = Color(red: 0.12, green: 0.36, blue: 0.31)
+  var body: some View {
+    VStack(spacing: 0) {
+      HStack(alignment: .center) {
+        Image(systemName: "doc.viewfinder").font(.system(size: 28, weight: .medium))
+          .foregroundStyle(green)
+        VStack(alignment: .leading, spacing: 3) {
+          Text("Paper In").font(.system(size: 23, weight: .semibold))
+          Text("One document, as many pages as you need.").font(.system(size: 12)).foregroundStyle(
+            .secondary)
+        }
+        Spacer()
+        Circle().fill(scanner.connected ? green : Color.secondary.opacity(0.5)).frame(
+          width: 7, height: 7)
+        Text(model.demo ? "Preview" : scanner.scannerName).font(.system(size: 12))
+        if !model.demo {
+          Button(scanner.listening ? "Pause scanner" : "Connect") {
+            if scanner.listening { scanner.pause() } else { scanner.connect() }
+          }.disabled(scanner.busy || model.store == nil)
+          if scanner.listening && !scanner.connected {
+            Button("Retry") { scanner.retry() }.disabled(scanner.busy)
+          }
+        }
+      }.padding(24)
+      Divider()
+      HStack(spacing: 0) {
+        VStack(alignment: .leading, spacing: 16) {
+          HStack {
+            Text("YOUR DOCUMENT").font(.system(size: 10, weight: .semibold)).tracking(1.4)
+              .foregroundStyle(.secondary)
+            Spacer()
+            Text("\(model.pages.count)").monospacedDigit().font(.system(size: 12, weight: .medium))
+          }
+          if model.pages.isEmpty {
+            Text("Your pages will appear here.").font(.callout).foregroundStyle(.secondary).padding(
+              .top, 10)
+          }
+          ScrollView {
+            LazyVStack(spacing: 9) {
+              ForEach(Array(model.sheets.enumerated()), id: \.element.id) { index, sheet in
+                Button {
+                  model.select(sheet.visible.first?.id)
+                } label: {
+                  HStack(spacing: 8) {
+                    ForEach(sheet.visible.prefix(2)) { page in
+                      PageThumbnail(store: model.store, page: page).id(
+                        page.id + String(page.rotation) + String(describing: page.crop))
+                    }
+                    VStack(alignment: .leading, spacing: 3) {
+                      Text(
+                        sheet.pages.first?.sheetID == nil
+                          ? "Page \(index + 1)" : "Sheet \(index + 1)"
+                      ).font(.system(size: 13, weight: .medium))
+                      Text(sheet.paired ? "Front + back" : "One side").font(.system(size: 10))
+                        .foregroundStyle(.secondary)
+                    }
+                    Spacer()
+                  }.padding(10).background(
+                    model.selectedSheet?.id == sheet.id ? green.opacity(0.09) : Color.white
+                  )
+                  .clipShape(RoundedRectangle(cornerRadius: 8))
+                }.buttonStyle(.plain)
+              }
+            }
+          }
+          if model.hasRemovedPages {
+            Button("Restore removed page") { model.edit { try $0.restoreLastRemoved() } }.font(
+              .caption
+            ).disabled(!model.canEdit)
+          }
+          Text("Completed pages stay here until you save your PDF.").font(.system(size: 11))
+            .foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+        }.padding(20).frame(width: 225)
+        Divider()
+        VStack(spacing: 0) {
+          if model.pages.isEmpty {
+            VStack(spacing: 15) {
+              Image(systemName: "scanner").font(.system(size: 48, weight: .ultraLight))
+                .foregroundStyle(green)
+              Text("Start with a sheet of paper").font(.system(size: 23, weight: .medium))
+              Text("Scan each sheet, then save them together as one PDF.").foregroundStyle(
+                .secondary)
+              if let last = model.lastExport {
+                Button("Show saved PDF") { NSWorkspace.shared.activateFileViewerSelecting([last]) }
+              }
+            }.frame(maxWidth: .infinity, maxHeight: .infinity).background(Color.white)
+          } else {
+            HStack {
+              Text("Preview").font(.caption).foregroundStyle(.secondary)
+              Spacer()
+              Picker("Layout", selection: $model.pairedPreview) {
+                Text("Front + back").tag(true)
+                Text("Single page").tag(false)
+              }.pickerStyle(.segmented).labelsHidden().frame(width: 220)
+            }.padding(10).background(Color.white)
+            SheetPreview(model: model)
+            HStack(spacing: 16) {
+              Text(
+                "Page \((model.pages.firstIndex { $0.id == model.selected } ?? 0) + 1) of \(model.pages.count)"
+              ).font(.caption).foregroundStyle(.secondary)
+              Spacer()
+              Button {
+                if let id = model.selected { model.edit { try $0.move(id, by: -1) } }
+              } label: {
+                Label("Earlier", systemImage: "arrow.up")
+              }
+              Button {
+                if let id = model.selected { model.edit { try $0.move(id, by: 1) } }
+              } label: {
+                Label("Later", systemImage: "arrow.down")
+              }
+              Button {
+                if let id = model.selected, let page = model.pages.first(where: { $0.id == id }) {
+                  model.edit { try $0.setAutoCrop(id, enabled: page.crop == nil) }
+                }
+              } label: {
+                Label(
+                  model.pages.first(where: { $0.id == model.selected })?.crop == nil
+                    ? "Auto crop" : "Full scan", systemImage: "crop")
+              }
+              Button {
+                if let id = model.selected { model.edit { try $0.rotate(id) } }
+              } label: {
+                Label("Rotate", systemImage: "rotate.right")
+              }
+              Button {
+                if let id = model.selected { model.edit { try $0.remove(id) } }
+              } label: {
+                Label("Remove", systemImage: "minus.circle")
+              }
+            }.buttonStyle(.borderless).disabled(!model.canEdit).padding(15).background(Color.white)
+          }
+        }.frame(maxWidth: .infinity, maxHeight: .infinity)
+      }
+      Divider()
+      VStack(alignment: .leading, spacing: 12) {
+        FilingToolbar(filing: model.filing)
+        if let failure = model.failure {
+          Label(failure, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(
+            Color(red: 0.65, green: 0.20, blue: 0.12)
+          ).textSelection(.enabled)
+        }
+        if let notice = model.notice {
+          Text(notice).font(.callout).foregroundStyle(.secondary).textSelection(.enabled)
+        }
+        HStack {
+          VStack(alignment: .leading, spacing: 5) {
+            Text(model.demo ? "Preview mode — scanner is untouched" : scanner.message).font(
+              .system(size: 13, weight: .medium)
+            ).textSelection(.enabled)
+            HStack(spacing: 6) {
+              Text("Up to A4 · 300 dpi · Colour").font(.caption).foregroundStyle(.secondary)
+              Toggle("Both sides", isOn: $model.duplex).toggleStyle(.checkbox).font(.caption)
+                .disabled(!model.canEdit || (!model.demo && !scanner.supportsDuplex))
+                .onChange(of: model.duplex) { _, value in
+                  scanner.duplex = value
+                  if !model.demo { UserDefaults().set(value, forKey: "bothSides") }
+                }
+              Toggle("Auto crop", isOn: $model.autoCrop).toggleStyle(.checkbox).font(.caption)
+                .disabled(!model.canEdit)
+                .onChange(of: model.autoCrop) { _, value in
+                  if !model.demo { UserDefaults().set(value, forKey: "autoCrop") }
+                }
+            }
+            if !model.demo && !scanner.buttonObserved {
+              Text("Use Scan or Space to add a sheet.").font(.system(size: 10)).foregroundStyle(
+                .secondary)
+            }
+          }
+          Spacer(minLength: 16)
+          if scanner.busy { Button("Stop") { scanner.pause() } }
+          Button {
+            model.scan()
+          } label: {
+            Label(model.pages.isEmpty ? "Scan" : "Scan next page", systemImage: "plus").padding(
+              .horizontal, 8
+            ).padding(.vertical, 7)
+          }
+          .keyboardShortcut(.space, modifiers: []).disabled(
+            !model.canEdit || (!model.demo && !scanner.connected))
+          Button {
+            model.save()
+          } label: {
+            Text(model.exporting ? "Saving…" : "Save PDF").fontWeight(.semibold).padding(
+              .horizontal, 16
+            ).padding(.vertical, 7)
+          }
+          .buttonStyle(.borderedProminent).tint(green).keyboardShortcut("s", modifiers: .command)
+          .disabled(scanner.busy || model.exporting || model.pages.isEmpty || model.store == nil)
+        }
+        HStack(spacing: 5) {
+          Image(systemName: "folder")
+          Text("Save to:")
+          Text(
+            model.destination.path.replacingOccurrences(
+              of: FileManager().homeDirectoryForCurrentUser.path, with: "~")
+          ).lineLimit(1).truncationMode(.middle)
+          Button("Change…") { model.chooseFolder() }.buttonStyle(.link).disabled(!model.canEdit)
+          Spacer()
+          if model.pages.count > 0 {
+            Text("\(model.pages.count) \(model.pages.count == 1 ? "page" : "pages") saved in draft")
+              .foregroundStyle(green)
+          }
+        }.font(.system(size: 11)).foregroundStyle(.secondary)
+      }.padding(20)
+    }
+    .frame(minWidth: 900, minHeight: 660)
+    .background(Color(red: 0.98, green: 0.975, blue: 0.96))
+    .onAppear { renderIfRequested() }
+  }
+  private func renderIfRequested() {
+    guard let index = CommandLine.arguments.firstIndex(of: "--screenshot"),
+      CommandLine.arguments.indices.contains(index + 1)
+    else { return }
+    let output = CommandLine.arguments[index + 1]
+    DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+      guard
+        let window = NSApplication.shared.windows.first(where: {
+          $0.contentView != nil && $0.frame.width > 500
+        }),
+        let view = (window.attachedSheet ?? window).contentView,
+        let bitmap = view.bitmapImageRepForCachingDisplay(in: view.bounds)
+      else { return }
+      view.cacheDisplay(in: view.bounds, to: bitmap)
+      try? bitmap.representation(using: .png, properties: [:])?.write(
+        to: URL(fileURLWithPath: output))
+      if let sheet = window.attachedSheet {
+        window.endSheet(sheet)
+        sheet.orderOut(nil)
+      }
+      NSApplication.shared.terminate(nil)
+    }
+  }
+}

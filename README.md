@@ -1,77 +1,75 @@
 # Paper In
 
-A personal Mac scanning prototype for the Brother DS-940DW.
+A small native Mac scanner app: **scan, add more sheets, save one PDF**.
 
-**Scan → scan more pages → Save PDF.** Every completed page is committed to a recoverable draft before the app labels it saved. Save PDF combines the current pages into one file in `~/Documents/Scanned Documents` and opens a fresh draft. The destination is remembered if changed.
+Version 0.2.0 adds paired front/back previews and optional AI filing. The supported scanner is **Brother DS-940DW over USB on macOS**. This is a community project, not a Brother product.
 
-## Current state
+## Use
 
-Version 0.1.4 enables automatic cropping by default. It detects the item against the scanner’s neutral roller background and padded area, preserves a small border, and sizes each PDF page from the cropped pixels at the original DPI. It stores reversible crop metadata; original image bytes are unchanged. The preview, thumbnails and exported PDF use the same crop. Full scan restores the original view of any page. Ambiguous backgrounds retain the full image. Existing pages in the current draft are processed once on upgrade, with removed-page states preserved; pending exports are not changed.
+1. Close other scanner applications, power on the DS-940DW in USB mode and click **Connect**.
+2. Insert a sheet and press **Scan** or Space. Keep adding sheets to the document.
+3. Review **Front + back** together, or switch to **Single page**. Select either side to rotate, crop or remove it. Zoom each preview independently. Removed sides can be restored.
+4. Press **Save PDF** or Command-S. The destination is remembered, and a fresh document starts.
 
-Real single-sided and duplex capture through the app are confirmed. Kelly confirmed both sides, and the direct USB logs recorded two saved images. The crop was checked on those real front/back images and on an exported two-page PDF: both pages are now approximately card-sized. Automated checks cover card/receipt bounds, full white pages, the scanner's two different background tones, per-page PDF dimensions, original preservation and crop restoration across restart.
+Every completed image is committed to a recoverable draft. Originals and reversible crop metadata are retained. Older drafts remain readable; pages without trustworthy sheet metadata stay individually displayed instead of guessing pairs.
 
-Capture still uses the proven A4 / 300 dpi colour request. Automatic cropping handles smaller items; it does not extend the acquisition area for receipts longer than A4. Very dark, coloured or ambiguous backgrounds can require using Full scan. Cropping does not deskew the original. Physical scanner button control remains unimplemented; use Scan or Space.
+## Optional AI filing
 
-Implemented:
+Choose your document root with **Change…**, then open **AI filing…**. It is off by default. New documents are first saved under `_Inbox` in that root. A separate worker performs local OCR, proposes a name and folder, checks relevant existing documents, and cross-checks its proposal with a second model call. Scanning remains available while it works.
 
-- One current document with no artificial page-count limit.
-- Scan / Space to append; Save PDF / Command-S to finish.
-- Persistent drafts, including recovery after a interrupted capture or failed manifest commit.
-- Page thumbnails, preview, rotation, earlier/later controls and reversible removal.
-- A4 acquisition at 300 dpi in colour; both sides and automatic cropping are remembered. Each PDF page uses its own resulting size.
-- Remembered output folder, collision-safe PDF publication and retryable pending exports.
-- Menu bar controls; closing the window leaves the app available.
-- Explicit Connect / Pause. Discovery and sessions do not start merely by launching the app.
-- Local connection timeline, scanner status, HTTP acceptance/rejections, page reception and save events.
-- No firmware changes, reset commands, background status poller, document uploads or AI requests.
+- **Codex:** official Codex SDK with its runtime's existing login (`codex login`).
+- **Claude:** official Claude Agent SDK with its runtime's existing login (`claude auth login`). Paper In identifies itself as `paper-in/0.2.0`; it does not extract tokens or impersonate another client. Provider eligibility, subscription limits and terms still apply. See [provider notes](docs/providers.md).
+- **API keys:** OpenAI Responses or Anthropic Messages. Enter a model identifier and store the key in macOS Keychain. API billing is separate from subscriptions.
 
-Hardware-dependent work remaining:
+Node.js **22+** is needed for AI filing. Scanning works without Node. Runtime paths are auto-detected and can be overridden in settings. The source build installs pinned SDK dependencies locally; it never changes your global CLI installations.
 
-- Single-sided and duplex capture are confirmed; continue checking orientation with other document types.
-- Physical scanner Start-button delivery is not implemented in the direct USB backend; use Scan or Space.
-- Validate actual unplug/replug and sleep/wake behavior and diagnostic error handling.
-- Long receipts and dedicated card presets are not enabled in this first prototype. Use ordinary A4 paper for initial testing.
-- A scan that stops before a complete image arrives may need to be repeated. The app cannot reconstruct a page the scanner never delivered.
+Automatically filing clear matches is optional. New folders, weak OCR, low confidence, disagreement between checks, duplicates and possible continuation pages require review. Open **Saved documents** to change the proposed name/location, approve filing, retry a failed job, reveal the PDF or Undo. Retry uses the currently selected provider settings. Names are never allowed to escape the selected root. Existing files are not overwritten; a short ID resolves ordinary name collisions. Related documents are never automatically merged or deleted.
 
-## Run
+The worker sees the folder structure, hashes existing PDFs for exact duplicates, and locally reads up to eight ranked candidate PDFs. It is a bounded comparison, not a claim to have semantically compared every page of a large archive. OCR and small-file indexing can take time on first use. Existing PDFs are read for context; only newly saved, explicitly opted-in exports become filing jobs.
+
+### Privacy and recovery
+
+When AI filing is enabled, extracted text, folder names and candidate excerpts are sent to the selected provider. Original page images are not uploaded by this implementation. OCR is local. The worker uses a separate empty working directory for each job; agent execution tools and external integrations are disabled. Providers can retain data according to the selected account and runtime settings. Codex can retain its own local session history.
+
+Drafts, original PDFs, the queue and local OCR cache live under `~/Library/Application Support/Paper In`. API keys are stored in Keychain and passed only to the worker's stdin. Diagnostics omit document text and provider response bodies. Nothing is written into a notes vault or sent through a project server.
+
+Published-export manifests are the durable handoff: if the app quits between saving and starting AI, the next run discovers that job. Interrupted analysis is retried. Publishing and Undo have persisted intent records and retain original bytes. Changed files are not deleted by Undo. Source scans and old drafts are retained; there is no automatic storage cleanup yet.
+
+## Build and test
+
+Requirements: macOS 14+, Xcode or Command Line Tools, Node.js 22+ and npm for the AI worker dependencies. Apple Silicon is tested; other Mac architectures are not yet validated.
 
 ```sh
 ./build.sh
 open '.build/Paper In.app'
-```
-
-The first launch starts paused. Close other scanning apps, load an ordinary sheet, then click Connect. Once Ready, use Scan or Space for the first capture. The scanner's Start button is a separate hardware test.
-
-For previewing without any scanner access:
-
-```sh
-open -n '.build/Paper In.app' --args --demo
-```
-
-Preview mode uses generated sample pages and a separate temporary draft/output folder. It cannot connect to the scanner. Scan next page adds another sample; Save PDF writes a sample PDF into that temporary output folder.
-
-The build uses an existing macOS 15.5 SDK with this Mac's Swift 6.1.2 compiler. A project-local VFS overlay hides a duplicate SwiftBridging module map during compilation. System files and the selected developer directory are not changed. The produced app targets Apple Silicon, macOS 14+, and is signed locally with an ad-hoc signature.
-
-## Verify
-
-```sh
 ./test.sh
 ```
 
-Tests exercise original-byte preservation, append after restart, two-frame image order, interrupted capture, recovery after a page arrives but the manifest write fails, reversible edits, retry after PDF publication is interrupted, output failures, collision refusal, an organizer moving finished PDFs, invalid input, a 40-page PDF and image orientation metadata. They do not prove hardware compatibility.
+The build uses the selected SDK and host architecture, with a narrowly scoped fallback for the known Swift 6.1.2 / mismatched CLT installation. `PAPER_IN_SDK` and `PAPER_IN_ARCH` can override these choices. No system settings are changed. Builds are ad-hoc signed for local use; public downloadable releases need signing/notarization work.
 
-## Storage and diagnostics
+For scanner-free UI inspection:
 
-Drafts and original image files: `~/Library/Application Support/Paper In/drafts/`.
+```sh
+open -n '.build/Paper In.app' --args --demo
+open -n '.build/Paper In.app' --args --demo --demo-settings
+open -n '.build/Paper In.app' --args --demo --demo-review
+```
 
-The active draft is referenced by `current.json`. Old drafts are retained after successful export; there is no automatic cleanup in this prototype. Raw transfer files are also retained for now. Only completed PDFs are published into the output folder, so the document organizer does not inspect a draft while it is being assembled.
+Demo mode uses generated pages and temporary storage and refuses provider requests. `--screenshot /absolute/path.png` exports the demo window for visual review.
 
-Connection logs: `~/Library/Application Support/Paper In/Diagnostics/`. Use **Show connection log** in the menu bar. Each launch creates a local JSONL timeline. Entries include session opening, feeder capabilities, scan requests, incoming page files, durable saves, completion and framework errors. The direct backend records acceptance only after HTTP 201 and page saving only after an image has been received and committed. Logs do not contain page images or extracted document text. Framework error descriptions can include local paths; review before sharing.
+`./test.sh` runs native persistence/PDF/crop/scanner-contract tests and Node queue/provider tests. Live synthetic provider checks are separately opt-in; see [validation](docs/validation.md).
 
-If output publication fails, the app retains the draft and pending export for retry instead of allowing new pages to silently alter that export. If a different file occupies the chosen generated filename, nothing is overwritten; move that conflicting file away before retrying. The UI currently keeps the destination fixed while an export is pending.
+## Extend
 
-Stop lets the current in-flight transfer finish and preserves its completed image before closing the owned job. No scan request is automatically retried.
+The app has one shared document workflow, a `ScannerBackend` contract and a shared AI proposal contract. Supported implementations are registered in catalogs. Start with [architecture](docs/architecture.md), which includes adding a provider or scanner and the tests an implementation must pass.
 
-Known limits: image decoding/draft commits and PDF work currently run on the main thread; extremely large documents may briefly pause the UI during export. A pathological crash immediately after publication combined with another process moving that PDF before publication is recorded can cause a duplicate on retry; original pages remain preserved. Neither condition has been presented as a solved hardware or full production reliability guarantee.
+## Current limits
 
-Latest handoff: version 0.1.4 preserves the active multi-page draft and its removed-page choices, and enables automatic cropping for new scans. The installed 0.1.3 app and the draft manifest before cropping are backed up under .build/.
+- Only the DS-940DW USB profile is supported and hardware-tested. Network scanners, other Brother models, flatbeds and multi-sheet ADFs are not advertised as supported.
+- Capture remains A4, 300 dpi, colour. Automatic crop sizes small items correctly; it does not extend acquisition for long receipts or deskew pages.
+- Physical scanner-button events and automatic insertion scanning are not implemented. Use Scan or Space.
+- Local OCR feeds classification; exported PDFs do not yet receive a searchable text layer.
+- Image processing and PDF generation remain on the main thread; very large documents may briefly pause export. AI work runs outside that thread.
+- AI output is fallible. Both checks use the selected provider, and confidence is not a measured probability. Review and Undo remain available.
+
+Paper In source is MIT licensed. Bundled/development dependencies retain their own licenses, including the proprietary Claude Agent SDK/runtime. See [third-party notices](docs/third-party.md).
