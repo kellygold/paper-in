@@ -1,5 +1,9 @@
 # Release notes
 
+## 0.3.8 — 6 September 2026
+
+Adds a second local blank-detection pass for cropped paper on a known scanner background. It follows skewed or curled borders and checks for connected ink strokes separately from broad, soft shadows and print-through. This addresses receipt backs retained by the earlier global ink-count check. The strict detector remains the first pass, and uncertain pages remain visible. Original images, restoration and existing draft edits are preserved; the change applies to newly received pages.
+
 ## 0.3.7 — 6 September 2026
 
 Preserves the previous off default when upgrading without a saved blank-skipping preference. Remembers the selected paper mode across restarts, with A4 as the fallback until Auto is explicitly chosen. Rechecks paper capabilities after connecting, including when changing transports. These fixes supersede the initial local 0.3.6 test build.

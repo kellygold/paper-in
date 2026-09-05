@@ -222,3 +222,89 @@ try blankReload.restoreLastRemoved()
 try blankReload.restoreLastRemoved()
 precondition(blankReload.visiblePages.count == 2)
 print("PASS all-blank sheet remains recoverable after restart and cannot export an empty PDF")
+
+// Scanner-like receipt fixtures: a narrow, skewed white item on gray rollers,
+// broad diagonal shadows, and optional real writing. No personal scans are checked in.
+func shadowReceipt(_ name: String, mark: String? = nil) throws -> URL {
+  let (url, _) = try fixture(
+    name, background: CGColor(gray: 0.72, alpha: 1), width: 1400, height: 2000
+  ) { ctx in
+    ctx.saveGState()
+    ctx.move(to: CGPoint(x: 700, y: 20))
+    ctx.addLine(to: CGPoint(x: 1360, y: 20))
+    ctx.addLine(to: CGPoint(x: 1315, y: 1980))
+    ctx.addLine(to: CGPoint(x: 735, y: 1950))
+    ctx.closePath()
+    ctx.clip()
+    ctx.setFillColor(CGColor(gray: 1, alpha: 1))
+    ctx.fill(CGRect(x: 0, y: 0, width: 1400, height: 2000))
+    for y in [350, 900, 1500] {
+      ctx.saveGState()
+      ctx.translateBy(x: 1050, y: CGFloat(y))
+      ctx.rotate(by: 0.14)
+      let gradient = CGGradient(
+        colorsSpace: CGColorSpaceCreateDeviceRGB(),
+        colors: [
+          CGColor(gray: 1, alpha: 1), CGColor(gray: 0.86, alpha: 1),
+          CGColor(gray: 1, alpha: 1),
+        ] as CFArray, locations: [0, 0.5, 1])!
+      ctx.drawLinearGradient(
+        gradient, start: CGPoint(x: 0, y: -22), end: CGPoint(x: 0, y: 22), options: [])
+      ctx.restoreGState()
+    }
+    if mark == "tiny" {
+      ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+      ctx.fill(CGRect(x: 1100, y: 1750, width: 5, height: 12))
+    } else if mark == "edge" {
+      ctx.setFillColor(CGColor(gray: 0, alpha: 1))
+      ctx.fill(CGRect(x: 730, y: 700, width: 5, height: 25))
+    } else if mark == "faint" {
+      ctx.setStrokeColor(CGColor(gray: 0.965, alpha: 1))
+      ctx.setLineWidth(3)
+      ctx.move(to: CGPoint(x: 900, y: 1200))
+      ctx.addLine(to: CGPoint(x: 1160, y: 1240))
+      ctx.strokePath()
+    } else if mark == "colored" {
+      ctx.setFillColor(CGColor(red: 1, green: 1, blue: 0.75, alpha: 1))
+      ctx.fill(CGRect(x: 1100, y: 1200, width: 30, height: 12))
+    } else if mark == "text" {
+      ctx.setFillColor(CGColor(gray: 0.7, alpha: 1))
+      for y in stride(from: 1100, to: 1300, by: 20) {
+        for x in stride(from: 900, to: 1150, by: 12) {
+          ctx.fill(CGRect(x: x, y: y, width: 3, height: 10))
+        }
+      }
+    }
+    ctx.restoreGState()
+  }
+  return url
+}
+let shadowBlank = try shadowReceipt("shadow-blank")
+for cropEnabled in [false, true] {
+  let shadowStore = try DraftStore(root: root.appendingPathComponent("shadow-\(cropEnabled)"))
+  let frontURL = try shadowReceipt("shadow-printed-\(cropEnabled)", mark: "text")
+  try shadowStore.beginCapture(expectedSides: 2)
+  try shadowStore.ingest(frontURL, autoCrop: cropEnabled, skipBlanks: true)
+  try shadowStore.ingest(shadowBlank, autoCrop: cropEnabled, skipBlanks: true)
+  try shadowStore.completeCapture(success: true)
+  precondition(!shadowStore.draft.pages[0].removed, "Printed receipt was skipped")
+  precondition(shadowStore.draft.pages[1].blankSkipped == true, "Shadowed receipt back was kept")
+  let shadowReload = try DraftStore(root: shadowStore.root)
+  precondition(shadowReload.visiblePages.count == 1)
+  let retained = try Data(
+    contentsOf: shadowReload.folder.appendingPathComponent(
+      "sources/" + shadowReload.draft.pages[1].source))
+  let originalReceipt = try Data(contentsOf: shadowBlank)
+  precondition(retained == originalReceipt)
+  let pdf = try shadowReload.export(to: root.appendingPathComponent("shadow-output-\(cropEnabled)"))
+  precondition(PDFDocument(url: pdf)?.pageCount == 1)
+}
+print("PASS skewed receipt shadows skip through ingestion, restart and PDF with crop on or off")
+for mark in ["tiny", "edge", "faint", "colored", "text"] {
+  let markedURL = try shadowReceipt("shadow-\(mark)", mark: mark)
+  let markedStore = try DraftStore(root: root.appendingPathComponent("shadow-marked-\(mark)"))
+  try markedStore.ingest(markedURL, autoCrop: true, skipBlanks: true)
+  precondition(!markedStore.visiblePages.isEmpty, "Writing on shadowed paper was hidden: \(mark)")
+}
+print(
+  "PASS shadowed receipts with tiny/edge ink, faint strokes, colored marks or text remain visible")

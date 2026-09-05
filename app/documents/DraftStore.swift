@@ -195,11 +195,7 @@ final class DraftStore {
         let original = try image(for: pages[index], cropped: false)
         let crop = AutoCrop.detect(original)
         if autoCrop { pages[index].crop = crop }
-        if skipBlanks,
-          BlankPageDetector.isClearlyBlank(
-            crop.map { $0.width * $0.height < 0.9 ? AutoCrop.apply($0, to: original) : original }
-              ?? original)
-        {
+        if skipBlanks, isBlank(original, crop: crop) {
           pages[index].removed = true
           pages[index].blankSkipped = true
         }
@@ -214,6 +210,20 @@ final class DraftStore {
     try commit(next)
     return pages.count
   }
+  private func isBlank(_ original: CGImage, crop: PageCrop?) -> Bool {
+    let item =
+      crop.map { $0.width * $0.height < 0.9 ? AutoCrop.apply($0, to: original) : original }
+      ?? original
+    if BlankPageDetector.isClearlyBlank(item) { return true }
+    // Keep the full silhouette for analysis: preview border whitening can leave
+    // disconnected gray slivers beside curled receipts. This changes no pixels on disk.
+    guard let crop, crop.width * crop.height < 0.9,
+      let backgrounds = crop.scannerBackground,
+      let rawItem = original.cropping(to: crop.rectangle(in: original))
+    else { return false }
+    return ShadowedPaperDetector.isBlank(rawItem, scannerBackground: backgrounds)
+  }
+
   private func reconcile() throws {
     guard draft.export == nil else { return }
     let envelopes = try fm.contentsOfDirectory(
