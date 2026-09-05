@@ -27,7 +27,35 @@ while model.exporting && Date() < deadline {
 precondition(!model.exporting && model.pages.isEmpty && model.failure == nil)
 precondition(PDFDocument(url: model.lastExport!)?.pageCount == 4)
 precondition(!model.scanner.listening && !model.filing.busy)
-try FileManager().removeItem(at: model.root)
 print(
   "PASS native document workflow: paired selection, rotate/remove/restore, append, PDF save; no scanner or provider contacted"
+)
+
+let bitmap = NSBitmapImageRep(
+  bitmapDataPlanes: nil, pixelsWide: 400, pixelsHigh: 600,
+  bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false, isPlanar: false,
+  colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
+memset(bitmap.bitmapData!, 255, bitmap.bytesPerRow * bitmap.pixelsHigh)
+let blank = model.root.appendingPathComponent("blank-back.png")
+try bitmap.representation(using: .png, properties: [:])!.write(to: blank)
+model.skipBlankBacks = true
+try model.scanner.onBegin?(ScanOptions(duplex: true))
+try model.scanner.onPage?(blank, 300)
+try model.scanner.onPage?(blank, 300)
+model.scanner.onEnd?(true, nil)
+precondition(model.pages.count == 1 && model.hasRemovedPages && model.sheets.count == 1)
+let skipped = model.selectedSheet!.page(side: 1)!
+precondition(skipped.blankBackSkipped == true && model.sheetPreviews.count == 1)
+model.edit { try $0.restore(skipped.id) }
+precondition(model.pages.count == 2 && !model.hasRemovedPages && model.sheetPreviews.count == 2)
+model.save()
+let blankDeadline = Date().addingTimeInterval(20)
+while model.exporting && Date() < blankDeadline {
+  RunLoop.main.run(until: Date().addingTimeInterval(0.05))
+}
+precondition(!model.exporting && model.pages.isEmpty && model.failure == nil)
+precondition(PDFDocument(url: model.lastExport!)?.pageCount == 2)
+try FileManager().removeItem(at: model.root)
+print(
+  "PASS app callbacks skip a blank back, update paired previews, restore that exact side and export both pages"
 )

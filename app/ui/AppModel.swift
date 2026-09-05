@@ -18,6 +18,7 @@ final class AppModel: ObservableObject {
   @Published var destination: URL
   @Published var duplex = UserDefaults().object(forKey: "bothSides") as? Bool ?? true
   @Published var autoCrop = UserDefaults().object(forKey: "autoCrop") as? Bool ?? true
+  @Published var skipBlankBacks = UserDefaults().object(forKey: "skipBlankBacks") as? Bool ?? false
   @Published var exporting = false
   @Published var exportPending = false
   @Published var hasRemovedPages = false
@@ -82,7 +83,8 @@ final class AppModel: ObservableObject {
       guard let self, let store = self.store else {
         throw PaperError("Draft storage isn’t available.")
       }
-      try store.ingest(url, dpi: dpi, autoCrop: self.autoCrop)
+      try store.ingest(
+        url, dpi: dpi, autoCrop: self.autoCrop, skipBlankBacks: self.skipBlankBacks)
       self.refresh(selectLast: true)
     }
     scanner.onEnd = { [weak self] success, error in

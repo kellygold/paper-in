@@ -23,6 +23,7 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Change the paired preview or zoom | [app/ui/SheetPreview.swift](../app/ui/SheetPreview.swift), [PagePreview.swift](../app/ui/PagePreview.swift) |
 | Understand draft recovery or PDF creation | [app/documents/DraftStore.swift](../app/documents/DraftStore.swift) |
 | Change page pairing or cropping | [app/documents/SheetGroup.swift](../app/documents/SheetGroup.swift), [AutoCrop.swift](../app/documents/AutoCrop.swift) |
+| Change blank-back detection | [app/documents/BlankPageDetector.swift](../app/documents/BlankPageDetector.swift); reversible decisions are stored by [DraftStore.swift](../app/documents/DraftStore.swift) |
 | Add a scanner | [app/scanning/ScannerBackend.swift](../app/scanning/ScannerBackend.swift), then [ScannerCatalog.swift](../app/scanning/ScannerCatalog.swift) |
 | Debug scanner discovery or switch USB/Wi-Fi | [app/scanning/ScannerDiscovery.swift](../app/scanning/ScannerDiscovery.swift) |
 | Debug capture or add an eSCL model profile | [app/scanning/ESCLScannerBackend.swift](../app/scanning/ESCLScannerBackend.swift), [ESCLScannerProfile.swift](../app/scanning/ESCLScannerProfile.swift) |

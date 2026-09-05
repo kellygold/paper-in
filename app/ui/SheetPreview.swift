@@ -32,10 +32,12 @@ struct SheetPreview: View {
           Image(systemName: "doc.badge.ellipsis").font(.largeTitle)
           Text(
             page?.removed == true
-              ? "Side removed"
+              ? (page?.blankBackSkipped == true ? "Blank back skipped" : "Side removed")
               : (model.scanner.busy ? "Waiting for this side…" : "Side not received"))
-          if page?.removed == true {
-            Text("Use Restore removed page to bring it back.").font(.caption)
+          if let page, page.removed {
+            Text("The original image is still saved.").font(.caption)
+            Button("Restore this side") { model.edit { try $0.restore(page.id) } }
+              .disabled(!model.canEdit)
           }
         }.foregroundStyle(.secondary).frame(maxWidth: .infinity, maxHeight: .infinity).background(
           Color(white: 0.925))

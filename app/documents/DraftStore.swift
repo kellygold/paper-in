@@ -19,6 +19,7 @@ struct StoredPage: Codable, Identifiable, Equatable {
   var sheetID: String?
   var side: Int?
   var expectedSides: Int?
+  var blankBackSkipped: Bool?
 }
 struct IngestEnvelope: Codable {
   var id: String
@@ -149,7 +150,9 @@ final class DraftStore {
     try commit(next)
   }
 
-  @discardableResult func ingest(_ input: URL, dpi: Double = 300, autoCrop: Bool = false) throws
+  @discardableResult func ingest(
+    _ input: URL, dpi: Double = 300, autoCrop: Bool = false, skipBlankBacks: Bool = false
+  ) throws
     -> Int
   {
     try editable()
@@ -183,8 +186,17 @@ final class DraftStore {
     try durableWrite(data, to: folder.appendingPathComponent("sources/\(id).image"))
     for index in pages.indices {
       pages[index].cropReviewed = true
-      if autoCrop {
-        pages[index].crop = AutoCrop.detect(try image(for: pages[index], cropped: false))
+      let isBack = pages[index].expectedSides == 2 && pages[index].side == 1
+      if autoCrop || (skipBlankBacks && isBack) {
+        let original = try image(for: pages[index], cropped: false)
+        let crop = AutoCrop.detect(original)
+        if autoCrop { pages[index].crop = crop }
+        if skipBlankBacks && isBack,
+          BlankPageDetector.isClearlyBlank(AutoCrop.apply(crop, to: original))
+        {
+          pages[index].removed = true
+          pages[index].blankBackSkipped = true
+        }
       }
     }
     let envelope = IngestEnvelope(id: id, received: Date(), pages: pages)
@@ -254,7 +266,18 @@ final class DraftStore {
     if next.pages != draft.pages { try commit(next) }
   }
   func rotate(_ id: String) throws { try update(id) { $0.rotation = ($0.rotation + 90) % 360 } }
-  func remove(_ id: String) throws { try update(id) { $0.removed = true } }
+  func remove(_ id: String) throws {
+    try update(id) {
+      $0.removed = true
+      $0.blankBackSkipped = nil
+    }
+  }
+  func restore(_ id: String) throws {
+    try update(id) {
+      $0.removed = false
+      $0.blankBackSkipped = nil
+    }
+  }
   private func update(_ id: String, change: (inout StoredPage) -> Void) throws {
     try editable()
     var next = draft
@@ -265,8 +288,13 @@ final class DraftStore {
   func restoreLastRemoved() throws {
     try editable()
     var next = draft
-    guard let index = next.pages.lastIndex(where: { $0.removed }) else { return }
+    // A user-removed front must be restored before its automatically skipped back.
+    guard
+      let index = next.pages.lastIndex(where: { $0.removed && $0.blankBackSkipped != true })
+        ?? next.pages.lastIndex(where: { $0.removed })
+    else { return }
     next.pages[index].removed = false
+    next.pages[index].blankBackSkipped = nil
     try commit(next)
   }
   func move(_ id: String, by offset: Int) throws {

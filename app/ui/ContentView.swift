@@ -58,7 +58,10 @@ struct ContentView: View {
                         sheet.pages.first?.sheetID == nil
                           ? "Page \(index + 1)" : "Sheet \(index + 1)"
                       ).font(.system(size: 13, weight: .medium))
-                      Text(sheet.paired ? "Front + back" : "One side").font(.system(size: 10))
+                      Text(
+                        sheet.pages.contains(where: { $0.blankBackSkipped == true })
+                          ? "Blank back skipped" : (sheet.paired ? "Front + back" : "One side")
+                      ).font(.system(size: 10))
                         .foregroundStyle(.secondary)
                     }
                     Spacer()
@@ -109,12 +112,12 @@ struct ContentView: View {
               Button {
                 if let id = model.selected { model.edit { try $0.move(id, by: -1) } }
               } label: {
-                Label("Earlier", systemImage: "arrow.up")
+                Label("Move earlier", systemImage: "arrow.up")
               }
               Button {
                 if let id = model.selected { model.edit { try $0.move(id, by: 1) } }
               } label: {
-                Label("Later", systemImage: "arrow.down")
+                Label("Move later", systemImage: "arrow.down")
               }
               Button {
                 if let id = model.selected, let page = model.pages.first(where: { $0.id == id }) {
@@ -154,6 +157,16 @@ struct ContentView: View {
             Text("Scanner and Mac must be on the same local network.").font(.caption)
               .foregroundStyle(.secondary)
           }
+          Spacer()
+          Toggle("Skip blank backs", isOn: $model.skipBlankBacks)
+            .toggleStyle(.checkbox).font(.caption)
+            .disabled(!model.canEdit || !model.duplex)
+            .help(
+              "Skip clearly blank backs in new scans. Originals stay saved and can be restored before Save PDF."
+            )
+            .onChange(of: model.skipBlankBacks) { _, value in
+              if !model.demo { UserDefaults().set(value, forKey: "skipBlankBacks") }
+            }
         }
         if let failure = model.failure {
           Label(failure, systemImage: "exclamationmark.triangle").font(.callout).foregroundStyle(
