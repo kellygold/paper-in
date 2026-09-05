@@ -1,0 +1,21 @@
+# Static site and Pages audit
+
+HEAD 4079cc53527af1596e2210f21ac48fbba90084e3 independently confirmed; git status --short empty. Base supplied: 6c9425e90b5c538991c268996b6ea01d9815e476. Completed 2026-09-05 22:25 UTC. Read-only source/HTTP review; no source edits or deployments.
+
+## Original finding (resolved in b6c1e30)
+P2 accessibility contrast: site/style.css:410 sets normal 10px step-number text to #7a896f on #f6f5ef, calculated contrast 3.41:1. At :476 the 8px local-label uses #778771 on #f7f8f0, contrast 3.58:1. Both are below the 4.5:1 normal-text target. Use a darker color, e.g. the existing --muted; its ratio against paper is 4.63:1. This affects secondary labels, not primary navigation or download controls. Main button white/green ratio is 10.24:1.
+
+## Passed checks
+- Parsed both HTML pages: all 14 local href/src/fragment references resolve; no duplicate IDs; one h1 and lang=en on each document.
+- Requested all seven static artifact files from http://127.0.0.1:8766/: HTTP200, correct content types, byte-for-byte equal to candidate disk files. Includes index/install, CSS, favicon SVG, preview PNG, robots.txt and .nojekyll.
+- Both DMG links use v0.4.0 and Paper-In-0.4.0-arm64.dmg, matching CFBundleShortVersionString0.4.0 and scripts/package-dmg.sh's version-derived filename. macOS14+ matches LSMinimumSystemVersion14.0; packaging rejects non-arm64. Node-bundled claim matches the packaging script copying Node22.23.2 into Resources/Runtime. Binary behavior belongs to root's DMG lane.
+- Unnotarized/ad-hoc status is stated on install.html and homepage first-open guidance. Wi-Fi, long-paper/Auto and blank-page limits are disclosed; scanner support is DS-940DW and Intel remains unverified. No guaranteed provider-account eligibility claim.
+- Native anchors and four details/summary controls preserve keyboard semantics. Main page has a skip-to-main link, focus-visible outlines, decorative alt-empty logos and descriptive screenshot alt. No custom JavaScript or third-party tracking/resources. Mobile CSS collapses columns/navigation, wraps file names and actions, scales preview to width; reduced-motion disables smooth scroll and hover motion. Actual focus behavior, horizontal overflow and visual screenshots are root's browser lane.
+- Pages workflow uses pinned actions, checkout with persist-credentials:false, contents:read and deployment-only pages/id-token writes. Artifact path is exactly site; seven static files, no symlinks, no app bundle, node_modules, source, .build or credentials included. Push deployment is limited to main plus site/workflow path changes; manual dispatch remains available.
+
+## Boundaries and cleanup
+Did not fetch unpublished download/release URLs or treat their absence as a defect. Root owns release-before-Pages ordering, actual upload/deployment, signing eligibility, browser rendering and DMG testing. No authenticated remote writes, private files, scanner operations, app launches, provider calls or subprocess servers. Only ignored evidence files created: static-checks.json and this receipt. Nothing to clean up; existing preview server left untouched.
+
+## Final contrast delta verification
+
+Independently confirmed clean HEAD b6c1e305bae10d990f39cc537568a656a6a94b74. The commit changes only the two reported small-label colors to --muted; all other site assets and deployment code remain the audited candidate. Both fixes pass: step-number 4.63:1; local-label 4.73:1. The served stylesheet matches the committed file. Checked the remaining meaningful small-text color/background combinations (body, install card, folder note, green filing panel, filed-note, privacy copy, stamp against the base paper, file rows and review badge): all meet 4.5:1. A theoretical stamp-on-darkest-gradient-center pairing is 4.44:1; the stamp is positioned at the corner rather than that center, so this is not a reproduced contrast failure. Actual gradient pixels behind stamp text remain a visual-check boundary. No additional confirmed meaningful small-text contrast issue found. Light separator and decorative arrow colors are not content text. Full pair measurements and timestamp are in contrast-recheck.json. Final result: no unresolved findings in this bounded static-site/Pages lane.
