@@ -33,12 +33,12 @@ New queued jobs capture their selected provider/model. **Retry analysis** uses c
 
 ## Provider eligibility and data handling
 
-Checked 5 September 2026. These are implementation notes, not a legal conclusion.
+Checked 6 September 2026. These are implementation notes, not a legal conclusion.
 
 Paper In does not read OAuth token files, copy credentials into a new client, or spoof another product. Authentication stays with the official runtime, and Claude requests identify Paper In explicitly. Both existing-login paths passed live tests with a fictional document; that establishes technical operation for those accounts.
 
-Anthropic's June subscription update acknowledges Agent SDK, `claude -p`, and third-party usage against subscription allowances. Its SDK/legal documentation also says third-party subscription login/rate limits require prior approval. Open-source status alone is not stated as an exemption. Clarify the distributed app's subscription eligibility before promoting that access as guaranteed.
+Anthropic's current legal guidance permits running the unmodified Claude Code binary in another product under its commercial terms, with users authenticating through Anthropic and paying for their own usage. It separately restricts third-party Claude.ai login and credential intermediation; the Agent SDK overview still requires prior approval for offering subscription login or rate limits. Its June support update says SDK and third-party usage continue to draw from subscription allowances. These statements do not establish blanket eligibility for Paper In. This adapter invokes the official runtime locally and does not provide a separate sign-in flow or shared account. Existing-login availability remains subject to the provider's terms and account eligibility; use the Anthropic API-key connection if your use is not eligible. Open-source status alone is not an exemption.
 
-References: [Claude subscription update](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan), [Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview), [Claude legal and compliance](https://code.claude.com/docs/en/legal-and-compliance), [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk), [Codex app server](https://learn.chatgpt.com/docs/app-server).
+References: [Claude subscription update](https://support.claude.com/en/articles/15036540-use-the-claude-agent-sdk-with-your-claude-plan), [Agent SDK](https://code.claude.com/docs/en/agent-sdk/overview), [Claude legal and compliance](https://code.claude.com/docs/en/legal-and-compliance), [Codex SDK](https://learn.chatgpt.com/docs/codex-sdk), [Codex app server](https://learn.chatgpt.com/docs/app-server), [Codex authentication](https://learn.chatgpt.com/docs/auth).
 
 For what is sent to providers and retained locally, see [privacy and recovery](privacy-and-recovery.md). Dependency licenses are covered in [third-party notices](third-party.md).

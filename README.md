@@ -19,7 +19,7 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 
 Scanning works without an AI account. AI filing is off by default.
 
-See the [0.3.1 release notes](docs/releases.md) for the latest changes and validation limits.
+See the [release notes](docs/releases.md) for the latest changes and validation limits.
 
 ## Get it running
 
@@ -41,7 +41,7 @@ The app bundle is currently about 515 MB because it contains both provider runti
 ## Scan your first document
 
 1. Put the DS-940DW in USB mode, connect it, and close other scanner apps.
-2. Open Paper In, choose your destination folder with **Change…**, then click **Connect**.
+2. Open Paper In, choose your destination by clicking the folder path at the bottom, then click **Connect**.
 3. Insert a sheet and click **Scan** or press Space. Repeat to add sheets to the same document.
 4. Review the pages and click **Save PDF** or press Command-S.
 
@@ -51,7 +51,7 @@ Use **Options → Skip blank pages** to leave clearly blank pages out of the pre
 
 **Move earlier** and **Move later** change the selected page's order in the exported PDF. In **Single page** view, each front and back has its own sidebar row; use the arrows above the preview to move between pages.
 
-For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
+For Wi-Fi, first connect the scanner to the same local network as your Mac, select **Options → Connection → Wi-Fi** in Paper In, then **Connect**. The preview, draft, PDF and AI filing workflow stays the same. See [Wi-Fi setup](docs/wifi.md) for the phone-assisted setup that keeps your Mac online and the current validation limits.
 
 To explore the UI without a scanner:
 

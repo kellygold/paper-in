@@ -9,7 +9,7 @@ The DS-940DW can join your router's network (infrastructure mode) or create its 
 3. Open `https://192.168.118.1` in the phone's browser. Log in using the separate password labelled **Pwd** on the scanner.
 4. Open **Network → Wireless → Wireless (Setup Wizard) → Start Wizard**, select your home network, and enter that network's password directly into the scanner's page.
 5. Let the scanner apply the settings. If the phone disconnects from Wireless Direct, reconnect it to your normal Wi-Fi.
-6. In Paper In, choose **Wi-Fi**, click **Connect**, and allow Local Network access if macOS asks. Once connected, insert a sheet and click **Scan**.
+6. In Paper In, choose **Options → Connection → Wi-Fi**, click **Connect**, and allow Local Network access if macOS asks. Once connected, insert a sheet and click **Scan**.
 
 The scanner supports 2.4 GHz Wi-Fi. Your Mac can use another band on the same router, provided the router allows devices to communicate across those networks. A guest network with client isolation will prevent discovery.
 
