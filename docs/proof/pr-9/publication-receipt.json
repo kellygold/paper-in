@@ -1,0 +1,137 @@
+{
+  "candidate": "df91266aba907d7bc27d1ef716f1393938efb94e",
+  "merged_sha": "d2830638338e8662d290fd79675eeb55884a1a0d",
+  "release": "https://github.com/kellygold/paper-in/releases/tag/v0.4.0",
+  "site": "https://kellygold.github.io/paper-in/",
+  "timestamp": "2026-09-06T21:31:34.860757+00:00",
+  "anonymous_download": {
+    "status": 200,
+    "bytes": 270044880,
+    "sha256": "b30317583133802dca190bea0c00a748bfbdf5beef40c10c69dafdcea0d20162",
+    "matches_signed_artifact": true
+  },
+  "website": [
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 1440,
+      "scrollWidth": 1440,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 390,
+      "scrollWidth": 390,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Paper In \u2014 Less paper. Less admin.",
+      "width": 320,
+      "scrollWidth": 320,
+      "images": [
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        },
+        {
+          "src": "assets/app-preview.png",
+          "loaded": true
+        },
+        {
+          "src": "assets/mark.svg",
+          "loaded": true
+        }
+      ],
+      "scripts": 0
+    },
+    {
+      "title": "Install Paper In",
+      "width": 320,
+      "scrollWidth": 320
+    }
+  ],
+  "http": {
+    "candidate": "df91266aba907d7bc27d1ef716f1393938efb94e",
+    "deployed_sha": "d2830638338e8662d290fd79675eeb55884a1a0d",
+    "timestamp": "2026-09-06T21:30:52.559598+00:00",
+    "files": [
+      {
+        "path": "assets/app-preview.png",
+        "status": 200,
+        "sha256": "a271e4df7bd4c8ef2155bf089275d4061869a94eae2675caff302e64cbdeb624",
+        "matches_source": true
+      },
+      {
+        "path": "assets/mark.svg",
+        "status": 200,
+        "sha256": "33f17dcee54815d55ff6628663f854904507f5d2ab7e4514e4613f45194de52d",
+        "matches_source": true
+      },
+      {
+        "path": "index.html",
+        "status": 200,
+        "sha256": "e55291d5c5a66acd4a3abed9d5acbd7bcf82ce7273846541e88d5fcf68ef1e7f",
+        "matches_source": true
+      },
+      {
+        "path": "install.html",
+        "status": 200,
+        "sha256": "5197b688f3bbb7c75c572434266f9c7099dbaca01dd95a0e5f4bd6edb496642b",
+        "matches_source": true
+      },
+      {
+        "path": "robots.txt",
+        "status": 200,
+        "sha256": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95",
+        "matches_source": true
+      },
+      {
+        "path": "style.css",
+        "status": 200,
+        "sha256": "00ddae6e029172b28026cc27959a92ffbc2247d18b72721baed657492ea79582",
+        "matches_source": true
+      }
+    ]
+  },
+  "cleanup": {
+    "temporary_download_removed": true,
+    "owned_preview_server_stopped": true,
+    "isolated_browser_stopped": true,
+    "review_worktree_removed": true,
+    "feature_branch_removed": true
+  },
+  "custom_domain_changed": false,
+  "ci": {
+    "post_merge": "https://github.com/kellygold/paper-in/actions/runs/34061270782",
+    "post_merge_status": "success",
+    "pages": "https://github.com/kellygold/paper-in/actions/runs/34061270781",
+    "pages_status": "success"
+  }
+}
