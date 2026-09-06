@@ -127,5 +127,14 @@
     "ticket_valid": true,
     "gatekeeper": "accepted: Notarized Developer ID",
     "verified_at": "2026-09-05T23:31:06.251132+00:00"
+  },
+  "review": {
+    "status": "completed",
+    "exit": 0,
+    "elapsed_seconds": 328.1,
+    "head": "df91266aba907d7bc27d1ef716f1393938efb94e",
+    "verdict": "no release-blocking findings",
+    "reviewer": "Claude Opus",
+    "effort": "high"
   }
 }
