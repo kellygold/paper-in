@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.4.0 beta — 6 September 2026
+
+- Adds an Apple Silicon DMG with a drag-to-Applications shortcut and offline setup notes. Includes a checksum-pinned Node runtime so AI filing does not need a separate Node installation. Explicit Node overrides remain available.
+- Adds an app icon and a static GitHub Pages website with setup, privacy and compatibility details.
+- Packaging allowlists worker resources and preserves upstream runtime bytes and license files.
+
+The published DMG is Developer ID signed, notarized by Apple and includes a stapled ticket. Scanner behavior is unchanged from 0.3.9; Wi-Fi, long receipts, Auto cropping and blank detection retain their documented hardware limitations.
+
 ## 0.3.9 — 6 September 2026
 
 - A failed filing or Undo no longer blocks later documents. Interrupted operations keep their target and can be retried when the original destination is available again.

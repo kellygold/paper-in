@@ -21,9 +21,13 @@ Scanning works without an AI account. AI filing is off by default.
 
 See the [release notes](docs/releases.md) for the latest changes and validation limits.
 
-## Get it running
+## Download
 
-This is an early project built from source. There is no signed installer yet. The build is tested on Apple Silicon; macOS 14 or later is required. Other Mac architectures and scanner models are not yet verified.
+[Get Paper In for Mac](https://kellygold.github.io/paper-in/) · [Releases and checksums](https://github.com/kellygold/paper-in/releases)
+
+The 0.4.0 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://kellygold.github.io/paper-in/install.html). Other Mac architectures and scanner models are not yet verified.
+
+## Build from source
 
 You need Apple's Xcode Command Line Tools (or Xcode), **Node.js 22+**, and npm. If the Apple tools are missing, run `xcode-select --install` first.
 
@@ -36,7 +40,7 @@ open '.build/Paper In.app'
 
 The build installs pinned AI SDKs inside the project and signs the app for local use. It does not change your global CLI installations or replace an installed Paper In app. To install it, quit any running copy and copy `.build/Paper In.app` into your Applications folder.
 
-The app bundle is currently about 515 MB because it contains both provider runtimes. Node itself is not bundled. [Build details and development commands →](docs/development.md)
+Source builds include both provider runtimes but use your installed Node. DMGs also bundle Node. [Build details and development commands →](docs/development.md)
 
 ## Scan your first document
 
@@ -90,7 +94,8 @@ app/          Mac app: screens, scanner connections, documents, AI settings
 ai/           AI filing: OCR, providers, naming, folders, review, Undo
 tests/        Automated checks and opt-in synthetic integration tests
 docs/         Architecture, provider setup, development, test evidence
-scripts/      Build and test helpers
+scripts/      Build, test and DMG packaging helpers
+site/         Static GitHub Pages website
 build.sh      Build the app
 test.sh       Build and run the automated checks
 ```
@@ -120,4 +125,4 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 
 ## License
 
-Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). Public binary distribution still needs signing, notarization, and dependency redistribution review.
+Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). The beta download preserves vendor runtimes and notices; the published DMG is Developer ID signed and notarized. See [distribution](docs/distribution.md).

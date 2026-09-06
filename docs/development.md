@@ -19,7 +19,7 @@ Run from the repository root:
 open '.build/Paper In.app'    # Launch the built app
 ```
 
-`build.sh` installs locked npm dependencies into `ai/node_modules` on the first build and when the lockfile changes. It does not install global CLIs. Both SDK runtimes and their license files are copied into the app bundle. Node itself must be installed separately for AI filing.
+`build.sh` installs locked npm dependencies into `ai/node_modules` on the first build and when the lockfile changes. It does not install global CLIs. Both SDK runtimes and their license files are copied into the app bundle. Source builds use an installed Node for AI filing; the DMG packaging script also bundles Node. See [distribution](distribution.md) for DMGs and the static website.
 
 The built app is ad-hoc signed for local development. Building does not quit or update an already installed app. Finish any scanning session before deliberately replacing or relaunching your installed copy.
 

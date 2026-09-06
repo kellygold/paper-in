@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Install Paper In</title>
+    <style>
+      body {
+        font:
+          16px/1.7 -apple-system,
+          BlinkMacSystemFont,
+          'Segoe UI',
+          sans-serif;
+        background: #f6f5ef;
+        color: #243c32;
+        margin: 0;
+        padding: 55px 24px;
+      }
+      main {
+        max-width: 680px;
+        margin: auto;
+      }
+      h1,
+      h2 {
+        font-family: Georgia, serif;
+        line-height: 1.15;
+        font-weight: 400;
+      }
+      h1 {
+        font-size: 50px;
+        letter-spacing: -2px;
+      }
+      h2 {
+        font-size: 29px;
+        margin-top: 36px;
+      }
+      a {
+        color: #20483b;
+        text-underline-offset: 4px;
+      }
+      li {
+        margin: 14px 0;
+      }
+      aside {
+        background: #e6ecdb;
+        border-left: 3px solid #60804f;
+        padding: 15px 22px;
+        font-size: 14px;
+      }
+      small {
+        color: #647268;
+      }
+      .back {
+        font-size: 13px;
+      }
+      code {
+        font-size: 13px;
+        overflow-wrap: anywhere;
+      }
+      .button {
+        display: inline-block;
+        padding: 10px 18px;
+        border-radius: 6px;
+        background: #20483b;
+        color: white;
+        text-decoration: none;
+      }
+      footer {
+        border-top: 1px solid #d8ddd0;
+        padding-top: 24px;
+        margin-top: 40px;
+        font-size: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <a class="back" href="https://kellygold.github.io/paper-in/">← Paper In</a>
+      <h1>Let's get you scanning.</h1>
+      <p>
+        Paper In 0.4.0 beta · Apple Silicon (M-series) Macs · macOS 14 or later · Brother DS-940DW
+      </p>
+      <aside>
+        This download is signed with Developer ID and notarized by Apple. macOS may ask you to
+        confirm opening an app downloaded from the internet.
+      </aside>
+      <h2>Install the app</h2>
+      <ol>
+        <li>
+          Open the DMG and drag <strong>Paper In</strong> into <strong>Applications</strong>. Quit
+          an older copy before replacing it; your drafts live separately in Application Support.
+        </li>
+        <li>
+          Open Paper In from Applications. If macOS asks whether to open the downloaded app, confirm
+          <strong>Open</strong>. If it reports an unidentified developer, a damaged app or malware,
+          stop and download a fresh copy from our GitHub release; report the exact message if it
+          persists. <a href="https://support.apple.com/en-us/102445">Apple's guidance</a>.
+        </li>
+        <li>
+          Put the DS-940DW in USB mode, connect it, and close other scanner apps. Choose the output
+          folder in Paper In, then click <strong>Connect</strong>.
+        </li>
+        <li>
+          Insert a page and press <strong>Scan</strong> or Space. Add more pages, review both sides,
+          and <strong>Save PDF</strong>.
+        </li>
+      </ol>
+      <h2>Optional AI filing</h2>
+      <p>
+        Scanning needs no account. For automatic names and folders, open
+        <strong>AI filing…</strong> and choose a provider. Node and the provider runtimes are
+        included in the DMG; you do not need to install Node separately.
+      </p>
+      <p>
+        Claude and Codex use the official runtime's existing login, where your account and provider
+        terms allow it. Initial sign-in is through those providers' own tools. Or choose OpenAI /
+        Anthropic API, enter a supported model and store your API key in Keychain. API billing is
+        separate.
+      </p>
+      <p>
+        <a href="https://github.com/kellygold/paper-in/blob/main/docs/providers.md"
+          >Provider setup and account eligibility →</a
+        >
+      </p>
+      <h2>Keep in mind</h2>
+      <p>
+        USB support is focused on the DS-940DW. Wi-Fi, Auto paper, long receipts and blank-page
+        detection are still being calibrated. Review faint text and creased receipts. Skipped
+        originals can be restored before saving. PDFs do not yet have a searchable text layer.
+      </p>
+      <p>
+        AI filing sends extracted text, folder names and selected related excerpts to your provider.
+        Page images stay local. Originals are retained; filing can be undone.
+        <a href="https://github.com/kellygold/paper-in/blob/main/docs/privacy-and-recovery.md"
+          >Privacy and recovery</a
+        >.
+      </p>
+      <p>
+        <a class="button" href="https://github.com/kellygold/paper-in/issues"
+          >Get help or report a problem ↗</a
+        >
+      </p>
+      <footer>
+        Independent community software. Not made or endorsed by Brother.<br /><a
+          href="https://github.com/kellygold/paper-in"
+          >Source code</a
+        >
+        ·
+        <a href="https://github.com/kellygold/paper-in/releases/tag/v0.4.0"
+          >Release notes and checksum</a
+        >
+        ·
+        <a href="https://github.com/kellygold/paper-in/blob/main/docs/third-party.md"
+          >Third-party notices</a
+        >
+      </footer>
+    </main>
+  </body>
+</html>

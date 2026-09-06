@@ -17,6 +17,21 @@ let filing = FilingController(root: root, demo: false)
 var settings = FilingSettings()
 settings.enabled = true
 settings.provider = "codex"
+if let bundled = Bundle.main.resourceURL?.appendingPathComponent("Runtime/bin/node"),
+  FileManager().isExecutableFile(atPath: bundled.path)
+{
+  let resolved = try filing.nodeExecutable(settings)
+  precondition(
+    resolved.standardizedFileURL.path == bundled.standardizedFileURL.path,
+    "Bundled Node must be the default: \(resolved.path) vs \(bundled.path)")
+  var overridden = settings
+  overridden.nodePath = "/usr/bin/true"
+  let explicit = try filing.nodeExecutable(overridden)
+  precondition(
+    explicit.path == overridden.nodePath,
+    "Explicit executable override must take precedence")
+  print("PASS bundled Node selection and explicit override")
+}
 try filing.persist(settings)
 func settle() {
   let deadline = Date().addingTimeInterval(300)
