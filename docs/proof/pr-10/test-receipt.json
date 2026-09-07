@@ -35,5 +35,10 @@
   },
   "final_candidate": "fcf7b1898f4c3642c5f088dc7224b089b8c6ba67",
   "candidate_delta": "README.md and docs/validation.md only; application, worker, tests, package inputs and site unchanged",
-  "ci_reviewed_code": "https://github.com/kellygold/paper-in/actions/runs/34108175357"
+  "ci_reviewed_code": "https://github.com/kellygold/paper-in/actions/runs/34108175357",
+  "ci_final_candidate": {
+    "url": "https://github.com/kellygold/paper-in/actions/runs/34108891010",
+    "conclusion": "success",
+    "duration_seconds": 272
+  }
 }
