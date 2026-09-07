@@ -1,0 +1,93 @@
+{
+  "candidate": "3fcbdb6a66aecb81323d78bffc514c10767b1bb5",
+  "external_reader": "Poppler pdftotext/pdfimages/pdftoppm",
+  "image_only_baseline_text_empty": true,
+  "amounts_and_long_receipt_start_middle_end_once_per_page": true,
+  "blank_page_text_empty": true,
+  "five_page_poppler_raster_hashes_identical_at_72dpi": true,
+  "raster_hashes": [
+    "0382bb6f11860e4462ef32909db4bd8807be40925d2f1be76235ae50b688d806",
+    "02a1ee3c799ae0c1af3ceee749e2fdb4f56d07e1d5be303cf90def33b5a72bce",
+    "27d431c9900d77f24de0e5d1699a7e6a937deef799620e8c504490a4bf2b50ea",
+    "a64334264a68ffbdea484c604af75404bc21237e308d703a2a7cfb18a34e600f",
+    "7e3de4d579e4194b48b92edb99704d2182707f9ff19107dcc875850f54d91a4f"
+  ],
+  "commands": [
+    [
+      "pdftotext",
+      "-layout",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf",
+      "-"
+    ],
+    [
+      "pdftotext",
+      "-layout",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf",
+      "-"
+    ],
+    [
+      "pdfimages",
+      "-list",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf"
+    ],
+    [
+      "pdfimages",
+      "-list",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf"
+    ],
+    [
+      "pdftoppm",
+      "-r",
+      "72",
+      "-png",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/baseline"
+    ],
+    [
+      "pdftoppm",
+      "-r",
+      "72",
+      "-png",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/export"
+    ],
+    [
+      "pdfimages",
+      "-png",
+      "fixtures/baseline.pdf",
+      "baseline-image"
+    ],
+    [
+      "pdfimages",
+      "-png",
+      "fixtures/export.pdf",
+      "export-image"
+    ],
+    [
+      "pdftotext",
+      "-layout",
+      "fixtures-cropped/export.pdf",
+      "-"
+    ],
+    [
+      "pdfimages",
+      "-list",
+      "fixtures-cropped/export.pdf"
+    ]
+  ],
+  "extracted_full_resolution_image_hashes_identical": true,
+  "full_resolution_image_hashes": [
+    "800688536ac55f8c2fb4879a940e037d23c44b4d7970f91c10d9e1b9104ac479",
+    "a6ba0843421d79424d01248ed584e66862aa9a2a0d11983c7d6850eca71f2504",
+    "800688536ac55f8c2fb4879a940e037d23c44b4d7970f91c10d9e1b9104ac479",
+    "8f0a9f675d8d34f00ca23157c5559ef0ee54370a4d0a9964350eb24f77aa3d21",
+    "a6ba0843421d79424d01248ed584e66862aa9a2a0d11983c7d6850eca71f2504"
+  ],
+  "ordinary_gray_rim_crop_verified": true,
+  "cropped_image_dimensions": [
+    1140,
+    1940
+  ],
+  "cropped_and_rotated_text_fragments_once": true,
+  "cropped_long_dimensions_note": "Gray rim exercised background handling; very long page retained full dimensions. Ordinary receipt physically cropped."
+}

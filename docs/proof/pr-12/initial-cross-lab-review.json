@@ -1,0 +1,7 @@
+{
+  "status": "completed",
+  "exit": 0,
+  "elapsed_seconds": 271.3,
+  "head": "3fcbdb6a66aecb81323d78bffc514c10767b1bb5",
+  "boundary": "Reviewed 3fcbdb6 only; final overlap fix 809b483 requires delta review. Sequencing gate will be satisfied by publishing the DMG before merge; release-notes omission corrected in 809b483."
+}

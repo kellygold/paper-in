@@ -1,0 +1,80 @@
+{
+  "candidate": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "base_evidence_candidate": "3fcbdb6a66aecb81323d78bffc514c10767b1bb5",
+  "platform": "macOS 26.3.1",
+  "reader": "Poppler 26.03.0",
+  "clean_exact_head_before_run": true,
+  "baseline_has_no_text": true,
+  "per_page_occurrences": [
+    {
+      "82746": 1,
+      "139.00": 1
+    },
+    {
+      "12345": 1,
+      "55555": 1,
+      "66666": 1,
+      "67890": 1,
+      "246.80": 1
+    },
+    {
+      "82746": 1,
+      "139.00": 1
+    },
+    {},
+    {
+      "12345": 1,
+      "55555": 1,
+      "66666": 1,
+      "67890": 1,
+      "246.80": 1
+    }
+  ],
+  "blank_page_has_no_text": true,
+  "five_full_resolution_embedded_image_hashes_match": true,
+  "image_hashes": [
+    "800688536ac55f8c2fb4879a940e037d23c44b4d7970f91c10d9e1b9104ac479",
+    "a6ba0843421d79424d01248ed584e66862aa9a2a0d11983c7d6850eca71f2504",
+    "800688536ac55f8c2fb4879a940e037d23c44b4d7970f91c10d9e1b9104ac479",
+    "8f0a9f675d8d34f00ca23157c5559ef0ee54370a4d0a9964350eb24f77aa3d21",
+    "a6ba0843421d79424d01248ed584e66862aa9a2a0d11983c7d6850eca71f2504"
+  ],
+  "commands": [
+    [
+      "pdftotext",
+      "-layout",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf",
+      "-"
+    ],
+    [
+      "pdftotext",
+      "-layout",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf",
+      "-"
+    ],
+    [
+      "pdfimages",
+      "-list",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf"
+    ],
+    [
+      "pdfimages",
+      "-list",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf"
+    ],
+    [
+      "pdfimages",
+      "-png",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/baseline.pdf",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/delta-baseline"
+    ],
+    [
+      "pdfimages",
+      "-png",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/fixtures/export.pdf",
+      "/Users/kgold/Code/paper-in/.build/searchable-independent/delta-export"
+    ]
+  ],
+  "scope": "Rerun existing retained synthetic fixture against overlap coalescing production delta; no crop rerun or broad sweep. Existing probe also checks CoreGraphics visible pixel equality, geometry/rotation, source bytes, removed page and restart.",
+  "limit": "This is local macOS 26.3.1 evidence, not proof of macOS 15 CI behavior. Coordinator must verify macOS 15 CI independently."
+}
