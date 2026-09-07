@@ -1,0 +1,21 @@
+{
+  "candidate": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "timestamp": "2026-09-07T15:26:00.765598+00:00",
+  "authenticated": false,
+  "checks": [
+    {
+      "url": "https://github.com/kellygold/paper-in/releases/download/v0.4.2/Paper-In-0.4.2-arm64.dmg",
+      "status": 200,
+      "bytes": 270097024,
+      "sha256": "eb7e88166ac16e2cd2b6b90039f24fb0885b4a3a4f751eb2cce1298692457e40",
+      "packagedBytesMatch": true
+    },
+    {
+      "url": "https://github.com/kellygold/paper-in/releases/download/v0.4.2/Paper-In-0.4.2-arm64.dmg.sha256",
+      "status": 200,
+      "bytes": 91,
+      "sha256": "e1c6860d9d16151d662c51bd3aa11024c1d79ee1cae6838e7e54b728374b9277",
+      "packagedBytesMatch": true
+    }
+  ]
+}
