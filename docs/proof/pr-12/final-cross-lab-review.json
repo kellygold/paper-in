@@ -1,0 +1,10 @@
+{
+  "status": "completed",
+  "exit": 0,
+  "elapsed_seconds": 281.9,
+  "head": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "scope": "3fcbdb6..809b483",
+  "verdict": "No release-blocking defects found",
+  "mode": "Static read-only review; attempted build denied, test evidence provided by separate lanes",
+  "userAuthorizedAdditionalWindow": true
+}
