@@ -10,7 +10,7 @@ PAPER_IN_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
 PAPER_IN_NOTARY_PROFILE="paper-in" ./scripts/package-dmg.sh
 ```
 
-The script rebuilds the app, bundles the checksum-pinned official Node 22.23.2 runtime, preserves dependency licenses and vendor binaries, and creates `.build/dist/Paper-In-0.4.0-arm64.dmg` plus a SHA-256 sidecar. The disk image contains Paper In, an Applications shortcut, and offline opening instructions. It does not update an installed copy or touch drafts.
+The script rebuilds the app, bundles the checksum-pinned official Node 22.23.2 runtime, preserves dependency licenses and vendor binaries, and creates `.build/dist/Paper-In-0.4.1-arm64.dmg` plus a SHA-256 sidecar. The disk image contains Paper In, an Applications shortcut, and offline opening instructions. It does not update an installed copy or touch drafts.
 
 The release script requires a Developer ID Application identity and a validated `notarytool` Keychain profile. It signs Paper In and its OCR helper with hardened runtime and a secure timestamp, preserving vendor signatures. It submits the app first, requires Accepted status, staples its ticket and checks distribution policy. It then signs and notarizes the DMG, staples and validates its ticket, and checks Gatekeeper before placing it at the release filename. The app therefore retains its own stapled ticket when copied into Applications. Apple Silicon and macOS 14+ are required; Intel packaging is not validated.
 
@@ -30,7 +30,7 @@ python3 -m http.server 8766 --bind 127.0.0.1 --directory site
 
 Open `http://127.0.0.1:8766`. Check desktop and narrow mobile widths, the setup page, keyboard navigation and download links. The setup page is self-contained because the DMG also includes it offline.
 
-GitHub Pages uses `.github/workflows/pages.yml`; only `site/` is uploaded. Select **GitHub Actions** as the Pages build source in repository settings. Changes on `main` publish to `https://kellygold.github.io/paper-in/`. Release binaries belong in GitHub Releases, not the Pages artifact.
+GitHub Pages uses `.github/workflows/pages.yml`; only `site/` is uploaded. Select **GitHub Actions** as the Pages build source in repository settings. Changes on `main` publish to `https://paper-in.app/`. Release binaries belong in GitHub Releases, not the Pages artifact.
 
 ## Release order
 
@@ -40,3 +40,13 @@ GitHub Pages uses `.github/workflows/pages.yml`; only `site/` is uploaded. Selec
 4. Merge the website update, verify the Pages workflow, follow the live download link and check the downloaded checksum.
 
 Never commit signing keys, notarization credentials, `.build`, app bundles or personal scan data. Keep the source and the published binary tied to the same commit.
+
+## Custom domain
+
+The intended public address is `https://paper-in.app/`, hosted on GitHub Pages. GitHub repository Settings → Pages owns the custom-domain setting because this site deploys through Actions. A CNAME file is not required by that workflow.
+
+Squarespace manages DNS. Replace the Squarespace default website records with four apex (`@`) A records: `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and `185.199.111.153`. Set `www` CNAME to `kellygold.github.io` (without a repository path). Remove conflicting default web/HTTPS records; preserve email and Domain Connect records. Use the provider's default TTL or a shorter supported TTL during the change.
+
+Set the domain in GitHub Pages before pointing DNS, wait for its DNS check and certificate issuance, then enable Enforce HTTPS. Verify the apex and www redirect, certificate, homepage, installation page, image assets and actual release download. Do not declare the domain live based only on saved settings. If registrar sign-in prevents completing the change, retain the existing GitHub Pages address until the cutover can finish.
+
+See [GitHub's domain instructions](https://docs.github.com/en/pages/configuring-a-custom-domain-for-your-github-pages-site/managing-a-custom-domain-for-your-github-pages-site) and [Squarespace DNS instructions](https://support.squarespace.com/hc/en-us/articles/360002101888-Adding-DNS-records-to-your-domain). The DNS values above were checked against GitHub's documentation on 7 September 2026; verify current guidance when changing providers later.

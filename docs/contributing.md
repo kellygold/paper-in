@@ -2,6 +2,8 @@
 
 Paper In is early and intentionally small. Useful contributions include clearer errors, recovery fixes, accessible controls, tests, and verified scanner/provider adapters.
 
+Have another scanner? [Volunteer to test compatibility](scanner-testing.md). Hardware owners can help verify new profiles without maintainers purchasing every model.
+
 ## Your first change
 
 1. Read the [project map](project-map.md) and build with [development.md](development.md).

@@ -23,9 +23,9 @@ See the [release notes](docs/releases.md) for the latest changes and validation 
 
 ## Download
 
-[Get Paper In for Mac](https://kellygold.github.io/paper-in/) · [Releases and checksums](https://github.com/kellygold/paper-in/releases)
+[Get Paper In for Mac](https://paper-in.app/) · [Releases and checksums](https://github.com/kellygold/paper-in/releases)
 
-The 0.4.1 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://kellygold.github.io/paper-in/install.html). Other Mac architectures and scanner models are not yet verified.
+The 0.4.1 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://paper-in.app/install.html). Other Mac architectures and scanner models are not yet verified.
 
 ## Build from source
 

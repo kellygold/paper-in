@@ -1,6 +1,6 @@
 # Architecture
 
-Status: 0.3.0 adds experimental Wi-Fi to the DS-940DW USB workflow. Hardware evidence is recorded in [validation](validation.md).
+The supported model is the DS-940DW, using shared USB and Wi-Fi scanning components. Hardware evidence and remaining limits are recorded in [validation](validation.md).
 
 ```mermaid
 flowchart TD
@@ -54,6 +54,8 @@ A provider may use HTTP, an official SDK or a supported local runtime. The gener
 
 ## Adding a scanner
 
+Owners can use the [hardware testing checklist](scanner-testing.md) to help verify support for additional models.
+
 1. Implement `ScannerBackend`: expose capabilities/state, connect/pause/retry, accept `ScanOptions`, and emit begin/image/end callbacks. Page callbacks must be acknowledged by durable storage before reporting success. Never automatically repeat a physical scan after uncertain delivery.
 2. Register it in `ScannerCatalog`. One-sheet eSCL devices can implement `ESCLScannerProfile` and reuse `ESCLScannerBackend`, discovery and `ESCLClient`. Other acquisition protocols implement the same backend contract. The catalog injects model and transport; the draft and filing layers never branch on either.
 3. Run the shared session contract tests, draft tests and a backend transport suite. Verify real single/duplex captures, empty feeder, jam, unplug/replug and sleep/wake before advertising the model.
@@ -65,7 +67,7 @@ A provider may use HTTP, an official SDK or a supported local runtime. The gener
 - A published PDF's source bytes, hash, original location and filing settings are recorded with its export. This permits restart discovery without re-uploading legacy scans.
 - Each queued job keeps its own original PDF. Analysis errors never remove it or the inbox copy.
 - `queued → analyzing → review → publishing → filed`; interrupted analysis can retry. File publication and Undo record their intended targets before mutation and reconcile matching hashes on restart.
-- Review is mandatory for changed proposals, new folders, relationships/duplicates, limited context, weak OCR or confidence below 0.92. This threshold is a product heuristic, not a statistical guarantee.
+- Review is mandatory for changed proposals, new folders, possible duplicates/continuations or uncertain relationships, limited context, weak OCR or confidence below 0.92. A confirmed separate purchase from the same vendor does not itself require review. This threshold is a product heuristic, not a statistical guarantee.
 - Paths are relative to the chosen canonical root; dot paths, traversal and symlink components are rejected. Publishing uses atomic no-clobber links. Only an unchanged app-created inbox copy is cleaned up.
 - Undo restores from the retained original and removes a filed copy only if its bytes still match. It never overwrites a user's changed file.
 - No provider response is executable code. Model-suggested relationships cannot authorize merge, deletion or arbitrary filesystem access.
