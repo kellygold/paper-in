@@ -1,6 +1,6 @@
 # Validation
 
-Status: 0.4.1 candidate checked on 7 September 2026. Offline, native UI and performance checks passed. Independent queue validation passed; the different-lab review reached its eight-minute limit without a verdict. Signing/notarization and the remaining release decision are tracked in PR #10. Version 0.4.0 remains the published signed installer until those release gates pass.
+Status: 0.4.1 published and installed on 8 September 2026. All 98 offline checks, mounted native UI/performance checks, independent queue validation and final CI passed. The app and DMG are Developer ID signed, notarized and stapled; an anonymous full release download matched its SHA-256 checksum. The additional different-lab review found no blocking code defect; its publish-assets-before-merge requirement was satisfied. See [PR #10 evidence](https://github.com/kellygold/paper-in/pull/10#issuecomment-5568895463) for receipts and limits.
 
 ## Automated checks
 
