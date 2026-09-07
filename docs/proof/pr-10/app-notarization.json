@@ -1,0 +1,22 @@
+{
+  "candidate": "fcf7b1898f4c3642c5f088dc7224b089b8c6ba67",
+  "app_version": "0.4.1",
+  "app_build": "18",
+  "executable_sha256": "636782e826a4bdde4440faf5de0562f653ad239930397492accdc637ef809b23",
+  "app_notarization": {
+    "message": "Processing complete",
+    "id": "99974ae0-56ba-4ec0-a260-c42f76105e84",
+    "status": "Accepted"
+  },
+  "copied_app_checks": {
+    "stapler_validate": true,
+    "codesign_deep_strict": true,
+    "spctl_execute": "accepted: Notarized Developer ID",
+    "syspolicy_check_distribution": "passed",
+    "bundled_node_version": "v22.23.2",
+    "worker_source_files_identical": 15
+  },
+  "dmg_status": "final signing waits for macOS Keychain authorization",
+  "installation_status": "not replaced; normal quit returned User canceled",
+  "user_documents_modified": 0
+}
