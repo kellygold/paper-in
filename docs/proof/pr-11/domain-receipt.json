@@ -1,0 +1,23 @@
+{
+  "candidate": "ff061d10829f02ec0404055e373b9a480f07ce8d",
+  "checkedAt": "2026-09-07T14:34:22.618134+00:00",
+  "domain": "paper-in.app",
+  "httpsEnforced": true,
+  "certificateDomains": [
+    "paper-in.app",
+    "www.paper-in.app"
+  ],
+  "certificateState": "approved",
+  "httpsApexStatus": 200,
+  "wwwRedirect": {
+    "status": 301,
+    "location": "https://paper-in.app/"
+  },
+  "httpRedirect": {
+    "status": 301,
+    "location": "https://paper-in.app/"
+  },
+  "visualInspection": "Desktop and mobile screenshots inspected; layout coherent, images present, no clipped content observed.",
+  "boundary": "Browser screenshots show deployed eea87ef; candidate changes only static links/metadata, docs and issue template. Final deployed metadata must be checked after merge.",
+  "independentReviewDelta": "649a66b independent audit found checklist should verify unsaved draft before Save PDF. ff061d1 corrects this ordering only; coordinator checked delta."
+}

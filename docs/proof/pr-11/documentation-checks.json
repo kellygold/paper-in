@@ -1,0 +1,349 @@
+{
+  "head": "649a66b6adf0dc6aeece5e33eb7ea6c2ac57764c",
+  "clean": true,
+  "time": "2026-09-07T14:28:00.263576+00:00",
+  "changed_files": [
+    ".github/ISSUE_TEMPLATE/scanner-compatibility.yml",
+    "README.md",
+    "docs/architecture.md",
+    "docs/contributing.md",
+    "docs/distribution.md",
+    "docs/scanner-testing.md",
+    "docs/validation.md",
+    "site/index.html",
+    "site/install.html"
+  ],
+  "links": [
+    {
+      "source": ".github/ISSUE_TEMPLATE/scanner-compatibility.yml",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/scanner-testing.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/images/paired-preview.png",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/releases.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "https://paper-in.app/",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "https://paper-in.app/install.html",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/development.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/wifi.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/providers.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/privacy-and-recovery.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/project-map.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/architecture.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/contributing.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/validation.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/troubleshooting.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/validation.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "LICENSE",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/third-party.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "README.md",
+      "reference": "docs/distribution.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/architecture.md",
+      "reference": "validation.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/architecture.md",
+      "reference": "project-map.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/architecture.md",
+      "reference": "scanner-testing.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/contributing.md",
+      "reference": "scanner-testing.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/contributing.md",
+      "reference": "project-map.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/contributing.md",
+      "reference": "development.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/contributing.md",
+      "reference": "architecture.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/contributing.md",
+      "reference": "third-party.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/distribution.md",
+      "reference": "development.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/distribution.md",
+      "reference": "third-party.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "docs/scanner-testing.md",
+      "reference": "architecture.md#adding-a-scanner",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "https://paper-in.app/assets/app-preview.png",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "https://paper-in.app/",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "assets/mark.svg",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "style.css",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "#main",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "./",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "assets/mark.svg",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "#how",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "#install",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "#install",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "assets/app-preview.png",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "assets/app-preview.png",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/providers.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/privacy-and-recovery.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "install.html",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/providers.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "assets/mark.svg",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "#install",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/index.html",
+      "reference": "./",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/install.html",
+      "reference": "https://paper-in.app/",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/install.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/providers.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/install.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/privacy-and-recovery.md",
+      "exists": true,
+      "anchor_valid": true
+    },
+    {
+      "source": "site/install.html",
+      "reference": "https://github.com/kellygold/paper-in/blob/main/docs/third-party.md",
+      "exists": true,
+      "anchor_valid": true
+    }
+  ],
+  "links_checked": 52,
+  "remote_links_not_requested": 19,
+  "issue_form": {
+    "body_entries": 7,
+    "interactive_ids": [
+      "model",
+      "environment",
+      "connection",
+      "capabilities",
+      "observations",
+      "volunteer"
+    ],
+    "required_fields": [
+      "model",
+      "environment",
+      "connection"
+    ],
+    "shape_errors": []
+  }
+}
