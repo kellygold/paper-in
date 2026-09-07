@@ -117,7 +117,7 @@ for (index, fragments) in expected.enumerated() {
   for fragment in fragments {
     precondition(
       text.components(separatedBy: fragment).count == 2,
-      "Missing or duplicated \(fragment) on page \(index + 1)")
+      "Missing or duplicated \(fragment) on page \(index + 1). Synthetic text: \(text)")
   }
 }
 precondition(
