@@ -41,6 +41,10 @@ Start with [the project map](project-map.md) for a task-by-task guide to the fil
 - `ai/engine.mjs`: durable job state transitions, export discovery, bounded indexing, classification and approval. `files.mjs` owns confined paths and no-clobber publication. `library.mjs` owns local OCR and candidate retrieval.
 - `ai/ocr.m`: Objective-C Vision/PDFKit helper, keeping OCR local and avoiding a Swift/SDK module mismatch. Existing PDF text is used when present; otherwise each page is rendered and OCRed.
 
+`app/documents/SearchablePDF.swift` uses PDFKit's local OCR export for ordinary pages. Very long pages use bounded, overlapping Vision strips because whole-page PDFKit OCR can omit their text; `TextRecognition.m` provides a thin native interface that avoids Swift/Vision SDK incompatibilities. Recognized text is invisible, while original page images keep their resolution. All recognition runs in the existing background save operation before durable publication or AI filing. Blank pages can legitimately contain no text. OCR quality depends on macOS and the scan; the page image remains the source of truth. Retried pending exports reuse the retained PDF bytes instead of recognizing them again.
+
+Generated PDFs carry the PDF Creator value `Paper In (searchable PDF)`. The filing helper measures OCR confidence from their images as before, rather than treating the new embedded text as perfectly reliable digital text and bypassing weak-OCR review. Other readers can extract the embedded text directly.
+
 Swift controls the UX and scanning. The worker owns AI and filing transactions, with one process lock per application-data root. They exchange a JSON request over stdin/stdout, read a shared JSON queue format, and share the provider catalog. No long-running web server or remote service is required.
 
 ## Adding an AI provider or model

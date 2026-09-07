@@ -25,7 +25,7 @@ See the [release notes](docs/releases.md) for the latest changes and validation 
 
 [Get Paper In for Mac](https://paper-in.app/) · [Releases and checksums](https://github.com/kellygold/paper-in/releases)
 
-The 0.4.1 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://paper-in.app/install.html). Other Mac architectures and scanner models are not yet verified.
+The 0.4.2 beta DMG is for Apple Silicon Macs running macOS 14 or later. Drag Paper In into Applications. Node and the provider runtimes are included. The download is Developer ID signed and notarized by Apple; see the [opening instructions](https://paper-in.app/install.html). Other Mac architectures and scanner models are not yet verified.
 
 ## Build from source
 
@@ -119,7 +119,7 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 - DS-940DW only. Wi-Fi is experimental; one physical duplex scan through the shared backend is verified. Other scanner models and multi-sheet feeders are not yet supported. See [validation](docs/validation.md) for the tested scope.
 - Capture is 300 dpi, colour. **Auto** requests the scanner’s advertised automatic cropping within a 35.6 cm scan area and supports both sides when advertised. **A4** uses a fixed area; **Long receipt** allows up to 1.8 m, one side at a time. Close the output guide for straight-through feeding with long paper. Device Auto and long-paper behavior are still undergoing hardware validation. Deskew is not implemented.
 - **Options → Skip blank pages** applies to either side, single-sided scans and explicit imports. Originals remain restorable before saving; an all-blank capture stays in the draft and does not create an empty PDF. Cleanup preferences carry over from earlier builds.
-- OCR feeds AI filing; PDFs do not yet receive a searchable text layer.
+- New PDFs include a searchable text layer generated locally by macOS, even with AI filing off. The scanned images retain their resolution and appearance. Recognition can make mistakes, especially on faint or handwritten text; check the image for important details. Previously saved PDFs are unchanged.
 - Very large exports may briefly pause the interface. Drafts and recovery copies are retained without automatic cleanup.
 - AI can misread or misclassify documents. Its second check uses the same provider, and confidence is a heuristic. Review and Undo remain available.
 

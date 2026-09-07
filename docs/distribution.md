@@ -10,7 +10,7 @@ PAPER_IN_SIGN_IDENTITY="Developer ID Application: Your Name (TEAMID)" \
 PAPER_IN_NOTARY_PROFILE="paper-in" ./scripts/package-dmg.sh
 ```
 
-The script rebuilds the app, bundles the checksum-pinned official Node 22.23.2 runtime, preserves dependency licenses and vendor binaries, and creates `.build/dist/Paper-In-0.4.1-arm64.dmg` plus a SHA-256 sidecar. The disk image contains Paper In, an Applications shortcut, and offline opening instructions. It does not update an installed copy or touch drafts.
+The script rebuilds the app, bundles the checksum-pinned official Node 22.23.2 runtime, preserves dependency licenses and vendor binaries, and creates `.build/dist/Paper-In-0.4.2-arm64.dmg` plus a SHA-256 sidecar. The disk image contains Paper In, an Applications shortcut, and offline opening instructions. It does not update an installed copy or touch drafts.
 
 The release script requires a Developer ID Application identity and a validated `notarytool` Keychain profile. It signs Paper In and its OCR helper with hardened runtime and a secure timestamp, preserving vendor signatures. It submits the app first, requires Accepted status, staples its ticket and checks distribution policy. It then signs and notarizes the DMG, staples and validates its ticket, and checks Gatekeeper before placing it at the release filename. The app therefore retains its own stapled ticket when copied into Applications. Apple Silicon and macOS 14+ are required; Intel packaging is not validated.
 
