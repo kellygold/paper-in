@@ -1,0 +1,16 @@
+{
+  "candidate": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "ci": "https://github.com/kellygold/paper-in/actions/runs/34136150009",
+  "platform": "macos-15 GitHub runner",
+  "result": "success",
+  "nativePassed": 69,
+  "workerPassed": 32,
+  "totalPassed": 101,
+  "signatureCheck": "passed",
+  "noScannerOrProvider": true,
+  "previousFailures": [
+    "34135423975",
+    "34135798016"
+  ],
+  "boundaryRegression": "Missing boundary line on macOS 15 fixed and unchanged exact-once assertion now passes."
+}
