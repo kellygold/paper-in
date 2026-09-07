@@ -8,6 +8,13 @@ model.chooseSides(true)
 precondition(
   model.demo && model.pages.count == 2 && model.sheets.count == 1
     && model.selectedSheet?.paired == true)
+func waitForPreview() {
+  let deadline = Date().addingTimeInterval(5)
+  while model.previewLoading && Date() < deadline {
+    RunLoop.main.run(until: Date().addingTimeInterval(0.005))
+  }
+  precondition(!model.previewLoading, "Preview timed out")
+}
 let back = model.pages[1].id
 model.pairedPreview = false
 model.select(model.pages[0].id)
@@ -19,6 +26,7 @@ model.navigatePage(by: -1)
 precondition(model.selected == model.pages[0].id)
 model.pairedPreview = true
 model.select(back)
+waitForPreview()
 precondition(model.selected == back && model.sheetPreviews.count == 2)
 model.edit {
   try $0.rotate(back)
@@ -70,6 +78,7 @@ let skipped = model.store!.draft.pages.last!
 precondition(skipped.blankSkipped == true && model.sheetPreviews.isEmpty)
 model.edit { try $0.restore(skipped.id) }
 model.edit { try $0.restoreLastRemoved() }
+waitForPreview()
 precondition(model.pages.count == 2 && !model.hasRemovedPages && model.sheetPreviews.count == 2)
 model.save()
 let blankDeadline = Date().addingTimeInterval(20)
@@ -139,6 +148,7 @@ model.selected = order[0]
 model.restoreDraft(autoCrop: true)
 precondition(model.pages.count == 4 && model.canEdit && model.failure != nil)
 model.select(order[0])
+waitForPreview()
 precondition(model.preview != nil, "Healthy recovered pages must still be usable")
 print("PASS startup crop failure preserves visible legacy pages and healthy previews")
 
@@ -162,6 +172,13 @@ func fieldValues(_ view: NSView) -> [String] {
 precondition(fieldValues(window.contentView!).contains("synthetic-saved-model"))
 window.orderOut(nil)
 print("PASS opening AI settings keeps the saved provider model in the actual text field")
+model.pairedPreview = true
+model.select(order[2])
+waitForPreview()
+precondition(
+  model.preview != nil && model.sheetPreviews.count == 1,
+  "A corrupt back must not prevent the healthy front from displaying")
+print("PASS healthy front remains visible when its back cannot be decoded")
 model.filing.stop()
 model.scanner.pause()
 try FileManager().removeItem(at: model.root)

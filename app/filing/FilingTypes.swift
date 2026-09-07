@@ -14,13 +14,13 @@ struct ExportFilingIntent: Codable {
   var root: String
   var settings: FilingSettings
 }
-struct FilingRelation: Codable, Identifiable {
+struct FilingRelation: Codable, Identifiable, Equatable {
   var path: String
   var relationship: String
   var reason: String
   var id: String { path }
 }
-struct FilingProposal: Codable {
+struct FilingProposal: Codable, Equatable {
   var folder: String
   var filename: String
   var confidence: Double
@@ -28,7 +28,7 @@ struct FilingProposal: Codable {
   var needsReview: Bool
   var related: [FilingRelation]
 }
-struct FilingJob: Codable, Identifiable {
+struct FilingJob: Codable, Identifiable, Equatable {
   var id: String
   var created: String
   var state: String
@@ -37,9 +37,14 @@ struct FilingJob: Codable, Identifiable {
   var proposal: FilingProposal?
   var error: String?
   var target: String?
+  var reviewReasons: [String]?
+  var fileMissing: Bool?
   var displayName: String { proposal?.filename ?? URL(fileURLWithPath: original).lastPathComponent }
   var stateLabel: String {
+    if state != "dismissed", fileMissing == true { return "PDF missing" }
     switch state {
+    case "dismissed": return "Dismissed"
+    case "missing": return "PDF missing"
     case "queued": return "Waiting to organize"
     case "analyzing": return "Reading and checking"
     case "review": return "Needs review"

@@ -5,6 +5,7 @@ import SwiftUI
 struct ContentView: View {
   @ObservedObject var model: AppModel
   @ObservedObject var scanner: ScannerSession
+  @State private var confirmStartOver = false
   private let green = Color(red: 0.12, green: 0.36, blue: 0.31)
   var body: some View {
     VStack(spacing: 0) {
@@ -23,7 +24,7 @@ struct ContentView: View {
         if !model.demo {
           Button(scanner.listening ? "Pause scanner" : "Connect") {
             if scanner.listening { scanner.pause() } else { scanner.connect() }
-          }.disabled(scanner.busy || model.store == nil)
+          }.disabled(scanner.busy || model.exporting || model.store == nil)
           if scanner.listening && !scanner.connected {
             Button("Retry") { scanner.retry() }.disabled(scanner.busy)
           }
@@ -55,7 +56,7 @@ struct ContentView: View {
                   } label: {
                     HStack(spacing: 8) {
                       ForEach(sheet.visible.prefix(2)) { page in
-                        PageThumbnail(store: model.store, page: page).id(
+                        PageThumbnail(folder: model.previewFolder, page: page).id(
                           page.id + String(page.rotation) + String(describing: page.crop))
                       }
                       VStack(alignment: .leading, spacing: 3) {
@@ -82,7 +83,7 @@ struct ContentView: View {
                     model.select(page.id)
                   } label: {
                     HStack(spacing: 10) {
-                      PageThumbnail(store: model.store, page: page).id(
+                      PageThumbnail(folder: model.previewFolder, page: page).id(
                         page.id + String(page.rotation) + String(describing: page.crop))
                       VStack(alignment: .leading, spacing: 3) {
                         Text("Page \(index + 1)").font(.system(size: 13, weight: .medium))
@@ -100,6 +101,18 @@ struct ContentView: View {
                 }
               }
             }
+          }
+          if !model.pages.isEmpty || model.hasRemovedPages {
+            Button("Start over…", role: .destructive) { confirmStartOver = true }
+              .disabled(!model.canEdit)
+              .alert("Start a new document?", isPresented: $confirmStartOver) {
+                Button("Cancel", role: .cancel) {}
+                Button("Start over", role: .destructive) { model.startOver() }
+              } message: {
+                Text(
+                  "Clear all pages from this draft. Saved PDFs are not affected. Original scans remain in the app’s recovery data."
+                )
+              }
           }
           if model.hasRemovedPages {
             Button("Restore page") { model.edit { try $0.restoreLastRemoved() } }.font(

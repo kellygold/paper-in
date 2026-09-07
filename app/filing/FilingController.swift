@@ -68,23 +68,50 @@ final class FilingController: ObservableObject {
     settings = next
     if next.enabled && !demo { run() }
   }
+  private var refreshing = false
+  private var refreshAgain = false
+  private let refreshQueue = DispatchQueue(label: "paper.filing.list", qos: .utility)
   func refresh() {
+    guard !demo else { return }
+    if refreshing {
+      refreshAgain = true
+      return
+    }
+    refreshing = true
     let folder = root.appendingPathComponent("filing/jobs")
-    guard fm.fileExists(atPath: folder.path) else { return }
-    do {
-      jobs = try fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
-        .filter { UUID(uuidString: $0.lastPathComponent) != nil }
-        .compactMap { dir -> FilingJob? in
-          let file = dir.appendingPathComponent("job.json")
-          guard fm.fileExists(atPath: file.path) else { return nil }
-          do {
-            return try JSONDecoder().decode(FilingJob.self, from: Data(contentsOf: file))
-          } catch {
-            self.error = "A filing record could not be read. Other documents remain available."
-            return nil
+    refreshQueue.async { [weak self] in
+      let fm = FileManager()
+      var next: [FilingJob] = []
+      var issue: String?
+      do {
+        if fm.fileExists(atPath: folder.path) {
+          for dir in try fm.contentsOfDirectory(at: folder, includingPropertiesForKeys: nil)
+          where UUID(uuidString: dir.lastPathComponent) != nil {
+            let file = dir.appendingPathComponent("job.json")
+            guard fm.fileExists(atPath: file.path) else { continue }
+            do {
+              var job = try JSONDecoder().decode(FilingJob.self, from: Data(contentsOf: file))
+              let location = job.state == "filed" ? (job.target ?? job.original) : job.original
+              job.fileMissing = !fm.fileExists(atPath: location)
+              next.append(job)
+            } catch {
+              issue = "A filing record could not be read. Other documents remain available."
+            }
           }
-        }.sorted { $0.created > $1.created }
-    } catch { self.error = "A filing record could not be read. Its original PDF is preserved." }
+        }
+      } catch { issue = "The filing list could not be read. Originals are preserved." }
+      let result = next.sorted { $0.created > $1.created }
+      DispatchQueue.main.async {
+        guard let self else { return }
+        self.refreshing = false
+        if self.jobs != result { self.jobs = result }
+        if let issue { self.error = issue }
+        if self.refreshAgain {
+          self.refreshAgain = false
+          self.refresh()
+        }
+      }
+    }
   }
   func nodeExecutable(_ configuration: FilingSettings) throws -> URL {
     let home = fm.homeDirectoryForCurrentUser.path
@@ -141,7 +168,7 @@ final class FilingController: ObservableObject {
       }
       var secrets: [String: String] = [:]
       // Keys travel only through stdin to this child, never arguments or queue manifests.
-      for provider in providers where provider.needsAPIKey {
+      for provider in providers where command == "run" && provider.needsAPIKey {
         if let key = try KeychainStore.read(provider.id) { secrets[provider.id] = key }
       }
       request["secrets"] = secrets

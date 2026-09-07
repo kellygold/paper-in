@@ -60,3 +60,7 @@ When changing a dependency, update both `ai/package.json` and `ai/package-lock.j
 ## CI
 
 GitHub Actions runs `./test.sh` on a macOS Apple Silicon runner using Node 22. It requires no repository secrets, scanner, or AI account. The workflow grants read-only repository access and does not publish an installer. A successful CI run establishes build and offline test results, not hardware compatibility or provider eligibility.
+
+### Responsiveness benchmark
+
+Run `./scripts/test-performance.sh` for a mounted native UI benchmark using 5, 10 and 15 synthetic pages (300-dpi A4 and long images). It measures selection dispatch, completed previews, removal, save duration and a main-run-loop heartbeat. It also checks rapid selection, rotation dimensions, restore, PDF page counts, physical dimensions and durable restart state. It uses no scanner, provider or personal files. Timing varies with hardware; compare results on the same Mac. Screen previews are capped at 2,400 pixels with a 64 MiB cache; PDF export retains the original resolution.

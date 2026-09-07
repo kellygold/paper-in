@@ -16,6 +16,9 @@ try {
     if (request.command === 'run') warnings = await engine.run(request.secrets || {});
     else if (request.command === 'apply') await engine.apply(request.id, request.override);
     else if (request.command === 'undo') await engine.undo(request.id);
+    else if (request.command === 'dismiss') await engine.dismiss(request.id);
+    else if (request.command === 'dismissAll') await engine.dismissAll();
+    else if (request.command === 'restoreEntry') await engine.restoreEntry(request.id);
     else if (request.command === 'retry') await engine.retry(request.id, request.settings);
     else if (request.command !== 'list') throw new Error('Unknown filing command.');
   });

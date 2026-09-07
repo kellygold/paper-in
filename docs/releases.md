@@ -1,5 +1,13 @@
 # Release notes
 
+## 0.4.1 beta — 7 September 2026
+
+- Start over clears the draft after confirmation; recovery originals and saved PDFs are retained.
+- Dismiss or clear filing entries without deleting PDFs, and restore dismissed entries from the list. Externally removed PDFs are identified instead of silently recreated.
+- Review entries explain why approval is needed and can be rechecked with current preferences. Clearly separate purchases from the same vendor no longer trigger review solely because of that relationship.
+- Preview decoding and PDF saves run off the main thread; bounded cached screen images replace repeated full-resolution PDF rendering. Filing history refreshes in the background and publishes only changes.
+- Adds synthetic mounted-UI benchmarks for 5, 10 and 15 pages and a 1,000-entry filing history. Export keeps original resolution and physical page sizes.
+
 ## 0.4.0 beta — 6 September 2026
 
 - Adds an Apple Silicon DMG with a drag-to-Applications shortcut and offline setup notes. Includes a checksum-pinned Node runtime so AI filing does not need a separate Node installation. Explicit Node overrides remain available.

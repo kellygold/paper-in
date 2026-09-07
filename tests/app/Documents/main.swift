@@ -243,4 +243,32 @@ try test("Starting a new capture reconciles a completed page after manifest fail
     SheetGroup.make(store.draft.pages).count == 2, "New capture reused prior sheet identity")
 }
 
+try test("Start over changes the durable draft and preserves recovery sources") {
+  let root = base.appendingPathComponent("discard")
+  let store = try DraftStore(root: root)
+  try store.ingest(single)
+  let previous = store.draft.id
+  let source = store.folder.appendingPathComponent("sources/\(store.visiblePages[0].source)")
+  try store.discardDraft()
+  try expect(store.visiblePages.isEmpty && store.draft.id != previous, "Draft not cleared")
+  try expect(try DraftStore(root: root).visiblePages.isEmpty, "Old draft revived after restart")
+  try expect(fm.fileExists(atPath: source.path), "Recovery original was deleted")
+  try store.ingest(single)
+  let active = store.draft.id
+  store.beforeWrite = { url in
+    if url.lastPathComponent == "current.json" { throw PaperError("Synthetic pointer failure") }
+  }
+  do {
+    try store.discardDraft()
+    throw PaperError("Expected failure")
+  } catch { try expect(store.draft.id == active, "Failed discard changed active draft") }
+  try expect(try DraftStore(root: root).draft.id == active, "Failed discard lost restart pointer")
+  store.beforeWrite = nil
+  try store.beginCapture()
+  do {
+    try store.discardDraft()
+    throw PaperError("Expected capture guard")
+  } catch { try expect(store.draft.id == active, "Discard allowed during capture") }
+}
+
 print("\(passed) persistence and PDF tests passed; no scanner was contacted.")
