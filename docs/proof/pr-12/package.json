@@ -1,0 +1,28 @@
+{
+  "head": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "timestamp": "2026-09-07T15:15:40.423774+00:00",
+  "dmgSHA256": "eb7e88166ac16e2cd2b6b90039f24fb0885b4a3a4f751eb2cce1298692457e40",
+  "checks": {
+    "dmgStaple": "Processing: .build/dist/Paper-In-0.4.2-arm64.dmg\nThe validate action worked!\n",
+    "dmgSignature": "",
+    "dmgGatekeeper": ".build/dist/Paper-In-0.4.2-arm64.dmg: accepted\nsource=Notarized Developer ID\n",
+    "appStaple": "Processing: .build/searchable-dmg-check/Paper In.app\nThe validate action worked!\n",
+    "appSignature": "",
+    "appGatekeeper": ".build/searchable-dmg-check/Paper In.app: accepted\nsource=Notarized Developer ID\n",
+    "appDistribution": "App passed all pre-distribution checks and is ready for distribution.\n",
+    "offlineInstructionsMatch": true
+  },
+  "appNotary": {
+    "id": "fe1e327c-20a6-4341-aec8-7da769d82463",
+    "status": "Accepted",
+    "message": "Processing complete"
+  },
+  "dmgNotary": {
+    "message": "Processing complete",
+    "status": "Accepted",
+    "id": "258ff153-80eb-4488-b3a8-cfe0e065f93e"
+  },
+  "version": "0.4.2",
+  "build": "19",
+  "node": "v22.23.2"
+}
