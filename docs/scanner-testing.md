@@ -14,7 +14,7 @@ Work with an isolated test draft and fictional documents. Record the app revisio
 
 - Connect, disconnect and reconnect; verify the actual model and advertised capabilities.
 - Scan one printed front, then a distinct printed front/back pair if duplex is supported. Check order, completeness and physical PDF size.
-- Add 5, 10 and 15 pages, navigate both sides, remove/restore and rotate pages, then save one PDF. Reopen the app and check draft recovery.
+- Add 5, 10 and 15 pages, navigate both sides, remove/restore and rotate pages. Before saving, reopen the app and verify the unfinished draft is recovered. Then save one PDF and check its page count, order and dimensions.
 - Try a blank front and a blank back when the device supports them. Confirm faint real marks are retained, and skipped pages can be restored.
 - Test only document types and lengths the manufacturer's instructions permit. Check both ends of receipts and crop boundaries.
 - Start with an empty feeder and check the error. Observe recovery from a naturally occurring fault; do not deliberately jam or damage the scanner.
