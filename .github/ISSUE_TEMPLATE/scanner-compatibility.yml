@@ -1,0 +1,51 @@
+name: Scanner compatibility / volunteer testing
+description: Offer hardware testing for another scanner model.
+title: "[Scanner] Model name"
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Paper In currently supports only the Brother DS-940DW. This report helps plan testing; it does not enable another model.
+        Please read [the testing checklist](https://github.com/kellygold/paper-in/blob/main/docs/scanner-testing.md). Do not upload personal scans, credentials, serial numbers or network addresses.
+  - type: input
+    id: model
+    attributes:
+      label: Exact scanner model
+      placeholder: Manufacturer and full model number
+    validations:
+      required: true
+  - type: input
+    id: environment
+    attributes:
+      label: Mac and scanner versions
+      description: macOS version, Apple Silicon or Intel, scanner firmware if known, and Paper In version if installed.
+    validations:
+      required: true
+  - type: dropdown
+    id: connection
+    attributes:
+      label: Connection available for testing
+      options:
+        - USB
+        - Wi-Fi
+        - USB and Wi-Fi
+        - Ethernet
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: capabilities
+    attributes:
+      label: Feeder and document types
+      description: Single-sheet feed, automatic multi-sheet feeder or flatbed; duplex, cards and receipts if supported. Manufacturer documentation links are useful.
+  - type: textarea
+    id: observations
+    attributes:
+      label: Observations so far
+      description: What works in the manufacturer's app, any Paper In connection result, and anything still untested. Share only redacted diagnostics requested by a maintainer.
+  - type: checkboxes
+    id: volunteer
+    attributes:
+      label: Testing availability
+      options:
+        - label: I own or have access to this scanner and can test a development build with fictional documents.
