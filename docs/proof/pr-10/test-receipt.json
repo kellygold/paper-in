@@ -1,0 +1,39 @@
+{
+  "candidate": "7e01abd7b3d7e9d11f268625165d617260ee2aae",
+  "timestamp": "2026-09-07T09:52:28.397228+00:00",
+  "offline_tests": {
+    "native": 66,
+    "worker": 32,
+    "failures": 0
+  },
+  "benchmark": {
+    "cases": "5, 10, 15 pages; 1000 filing records",
+    "mounted_native_ui": true,
+    "baseline": "12 long images, synchronous AppModel selection before change; excludes mounted UI redraw cost",
+    "images": "synthetic 2480x3508 and 2480x7000 at 300dpi",
+    "export_assertions": [
+      "page count",
+      "full-resolution physical page dimensions",
+      "restart empty after save",
+      "start-over blocked during save"
+    ],
+    "selection_assertions": [
+      "rapid reversed navigation retains latest selection",
+      "removal and restoration",
+      "rotation swaps image bounds"
+    ]
+  },
+  "negative_assertions": {
+    "scanner_requests": 0,
+    "live_ai_calls": 0,
+    "user_documents_modified": 0,
+    "installed_app_replaced": false
+  },
+  "cleanup": {
+    "performance_fixture_removed": true,
+    "snapshot_demo_cleanup_complete": true
+  },
+  "final_candidate": "fcf7b1898f4c3642c5f088dc7224b089b8c6ba67",
+  "candidate_delta": "README.md and docs/validation.md only; application, worker, tests, package inputs and site unchanged",
+  "ci_reviewed_code": "https://github.com/kellygold/paper-in/actions/runs/34108175357"
+}
