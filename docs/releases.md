@@ -1,5 +1,14 @@
 # Release notes
 
+## 0.4.2 beta — 8 September 2026
+
+- New PDFs include locally recognized, searchable text, even with AI filing off. Other PDF readers and text extraction tools can read it without running OCR themselves.
+- Long receipts use overlapping recognition strips to retain text near both ends and across strip boundaries. Scanned images keep their resolution, appearance, page size and rotation.
+- Recognition runs during the existing background save. Synthetic 5/10/15-page saves took approximately 3/5.3/7.7 seconds on the development Mac, with main-loop gaps no larger than 25 ms; timings vary by machine and document.
+- AI filing still measures scan recognition confidence, rather than treating embedded OCR text as perfectly reliable.
+
+Recognition can make mistakes on faint text, handwriting and unusual layouts. Check the scanned image for important details. Previously saved PDFs are unchanged. Hardware support remains limited to the Brother DS-940DW.
+
 ## 0.4.1 beta — 7 September 2026
 
 - Start over clears the draft after confirmation; recovery originals and saved PDFs are retained.

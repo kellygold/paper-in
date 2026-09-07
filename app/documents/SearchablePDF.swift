@@ -47,6 +47,7 @@ enum SearchablePDF {
   private struct Line {
     let text: String
     let box: CGRect  // Full image pixels, bottom-left origin.
+    let strip: Int
   }
 
   private static func longPage(_ original: PDFPage, image: CGImage) throws -> PDFPage {
@@ -54,8 +55,9 @@ enum SearchablePDF {
     let height = image.height
     let stripHeight = min(4096, max(1024, image.width * 3))
     let overlap = 192
-    // Overlap prevents a line at a strip boundary from being cut in half. Its
-    // centre assigns it to one strip, so the exported text isn't repeated.
+    // Keep both observations in the overlap. Recognition boxes can shift across
+    // a boundary between calls/macOS versions; assigning by centre can lose a
+    // line in both strips. Coalesce their overlapping physical boxes afterward.
     for start in stride(from: 0, to: height, by: stripHeight) {
       try autoreleasepool {
         let top = max(0, start - overlap)
@@ -77,19 +79,31 @@ enum SearchablePDF {
         for observation in recognized {
           let text = observation.text
           let box = observation.box
-          let centre = Double(top) + (1 - box.midY) * Double(bottom - top)
-          guard centre >= Double(start), centre < Double(end) else { continue }
           lines.append(
             Line(
               text: text,
               box: CGRect(
                 x: box.minX * Double(image.width),
                 y: Double(height - bottom) + box.minY * Double(bottom - top),
-                width: box.width * Double(image.width), height: box.height * Double(bottom - top))))
+                width: box.width * Double(image.width), height: box.height * Double(bottom - top)),
+              strip: start))
         }
       }
     }
-    lines.sort {
+    // Prefer a complete observation to a fragment clipped at a tile edge. Only
+    // coalesce observations from different strips, never adjacent printed lines.
+    var merged: [Line] = []
+    for line in lines.sorted(by: { $0.box.width * $0.box.height > $1.box.width * $1.box.height }) {
+      let duplicate = merged.contains { other in
+        guard other.strip != line.strip else { return false }
+        let intersection = other.box.intersection(line.box)
+        let smaller = min(other.box.width * other.box.height, line.box.width * line.box.height)
+        return smaller > 0 && !intersection.isNull
+          && intersection.width * intersection.height > smaller * 0.65
+      }
+      if !duplicate { merged.append(line) }
+    }
+    lines = merged.sorted {
       $0.box.midY == $1.box.midY ? $0.box.minX < $1.box.minX : $0.box.midY > $1.box.midY
     }
 
