@@ -1,0 +1,33 @@
+{
+  "candidate": "ff061d10829f02ec0404055e373b9a480f07ce8d",
+  "merged": "45af1f1c271126ddeff7a1e86f28907b9565d940",
+  "checkedAt": "2026-09-07T14:35:36.144326+00:00",
+  "paths": [
+    {
+      "path": "/",
+      "status": 200,
+      "sha256": "910d64e769caff56ddd57e58486cc985a185f578a40ce64735fd6f740ffca2c3",
+      "equalsMergedSource": true
+    },
+    {
+      "path": "/install.html",
+      "status": 200,
+      "sha256": "dd5ab343d50dda1abeedb8ab9dce7ca354c8a1b0a70f91d34317322bd724a24f",
+      "equalsMergedSource": true
+    },
+    {
+      "path": "/assets/mark.svg",
+      "status": 200,
+      "sha256": "33f17dcee54815d55ff6628663f854904507f5d2ab7e4514e4613f45194de52d",
+      "equalsMergedSource": true
+    },
+    {
+      "path": "/assets/app-preview.png",
+      "status": 200,
+      "sha256": "a271e4df7bd4c8ef2155bf089275d4061869a94eae2675caff302e64cbdeb624",
+      "equalsMergedSource": true
+    }
+  ],
+  "canonicalAndSocialImageAndInstallBacklink": "passed",
+  "pagesRun": "https://github.com/kellygold/paper-in/actions/runs/34133724105"
+}
