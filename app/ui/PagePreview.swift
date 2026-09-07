@@ -3,33 +3,46 @@ import PDFKit
 import SwiftUI
 
 struct PageThumbnail: View {
-  let store: DraftStore?
+  let folder: URL?
   let page: StoredPage
   @State private var thumbnail: NSImage?
   var body: some View {
     Group {
       if let thumbnail {
-        Image(nsImage: thumbnail).resizable().scaledToFit().rotationEffect(
-          .degrees(Double(page.rotation)))
+        Image(nsImage: thumbnail).resizable().scaledToFit()
       } else {
         Image(systemName: "doc.text").foregroundStyle(.secondary)
       }
     }.frame(width: 33, height: 44)
-      .onAppear { thumbnail = store?.thumbnail(page) }
+      .task(id: folder.map { PreviewRenderer.key(folder: $0, page: page, pixels: 140) }) {
+        guard let folder else { return }
+        let rendered = try? await PreviewRenderer.shared.image(
+          folder: folder, page: page, pixels: 140)
+        if !Task.isCancelled, let rendered {
+          thumbnail = NSImage(cgImage: rendered.image, size: .zero)
+        }
+      }
   }
 }
 
 struct PagePreview: View {
-  let document: PDFDocument?
+  let image: NSImage?
+  var loading = false
   @State private var zoom: CGFloat = 1
   var body: some View {
     VStack(spacing: 0) {
       GeometryReader { geometry in
-        if let page = document?.page(at: 0) {
-          let image = page.thumbnail(of: NSSize(width: 1800, height: 2400), for: .mediaBox)
+        if let image {
           ScrollView([.horizontal, .vertical]) {
             Image(nsImage: image).resizable().scaledToFit().padding(18)
               .frame(width: geometry.size.width * zoom, height: geometry.size.height * zoom)
+          }
+        } else {
+          if loading {
+            ProgressView("Loading preview…").frame(maxWidth: .infinity, maxHeight: .infinity)
+          } else {
+            Text("Preview unavailable").foregroundStyle(.secondary).frame(
+              maxWidth: .infinity, maxHeight: .infinity)
           }
         }
       }

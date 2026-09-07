@@ -6,8 +6,9 @@ import SwiftUI
 final class AppModel: ObservableObject {
   @Published var pages: [StoredPage] = []
   @Published var selected: String?
-  @Published var preview: PDFDocument?
-  @Published var sheetPreviews: [String: PDFDocument] = [:]
+  @Published var previewFolder: URL?
+  @Published var preview: NSImage?
+  @Published var sheetPreviews: [String: NSImage] = [:]
   @Published var sheets: [SheetGroup] = []
   @Published var pairedPreview = true
   @Published var connection: ScannerConnection
@@ -36,9 +37,7 @@ final class AppModel: ObservableObject {
   private(set) var store: DraftStore?
   let demo: Bool
   let root: URL
-  var skippedPageCount: Int {
-    store?.draft.pages.filter { $0.removed && $0.blankSkipped == true }.count ?? 0
-  }
+  @Published var skippedPageCount = 0
   var canScanBothSides: Bool {
     demo ? paperMode != .longPaper : scanner.supportsDuplex(for: paperMode)
   }
@@ -141,30 +140,65 @@ final class AppModel: ObservableObject {
         "Your draft is restored, but some pages could not be cropped: \(error.localizedDescription)"
     }
   }
-  func refresh(selectLast: Bool = false) {
+  func refresh(selectLast: Bool = false, preferredSelection: String? = nil) {
+    guard !exporting else { return }
+    previewFolder = store?.folder
+    skippedPageCount =
+      store?.draft.pages.filter { $0.removed && $0.blankSkipped == true }.count ?? 0
     pages = store?.visiblePages ?? []
     sheets = SheetGroup.make(store?.draft.pages ?? [])
     exportPending = store?.draft.export != nil
     hasRemovedPages = store?.draft.pages.contains(where: { $0.removed }) ?? false
+    if let preferredSelection { selected = preferredSelection }
     if selectLast { selected = pages.last?.id }
     if !pages.contains(where: { $0.id == selected }) { selected = pages.first?.id }
     select(selected)
   }
+  private var previewTask: Task<Void, Never>?
+  @Published var previewLoading = false
   func select(_ id: String?) {
+    guard !exporting else { return }
+    previewTask?.cancel()
     selected = id
     sheetPreviews = [:]
-    guard let page = pages.first(where: { $0.id == id }) else {
-      preview = nil
+    preview = nil
+    guard let page = pages.first(where: { $0.id == id }), let folder = store?.folder else {
+      previewLoading = false
       return
     }
-    preview = nil
-    do {
-      preview = try store?.preview(page)
-      for sibling in selectedSheet?.visible ?? [] {
-        sheetPreviews[sibling.id] = try store?.preview(sibling)
+    let visible = selectedSheet?.visible ?? [page]
+    previewLoading = true
+    previewTask = Task { @MainActor [weak self] in
+      do {
+        var images: [String: NSImage] = [:]
+        var issue: String?
+        for sibling in visible {
+          do {
+            let bitmap = try await PreviewRenderer.shared.image(
+              folder: folder, page: sibling, pixels: 2400)
+            images[sibling.id] = NSImage(cgImage: bitmap.image, size: .zero)
+          } catch is CancellationError { throw CancellationError() } catch {
+            issue = error.localizedDescription
+          }
+        }
+        try Task.checkCancellation()
+        guard let self, !self.exporting, self.selected == id, self.store?.folder == folder else {
+          return
+        }
+        self.sheetPreviews = images
+        self.preview = images[page.id]
+        self.previewLoading = false
+        if let issue { self.failure = issue }
+      } catch is CancellationError {
+        // A newer selection owns the preview now.
+      } catch {
+        guard let self, !Task.isCancelled else { return }
+        self.previewLoading = false
+        self.failure = error.localizedDescription
       }
-    } catch { failure = error.localizedDescription }
+    }
   }
+
   var selectedPageIndex: Int? { pages.firstIndex { $0.id == selected } }
   func navigatePage(by offset: Int) {
     guard let index = selectedPageIndex, pages.indices.contains(index + offset) else { return }
@@ -186,17 +220,31 @@ final class AppModel: ObservableObject {
     let previousSheetID = selectedSheet?.id
     do {
       try action(store)
-      refresh()
-      if let previousIndex, !pages.isEmpty, !pages.contains(where: { $0.id == previousID }) {
+      let remaining = store.visiblePages
+      var nextSelection = previousID
+      if let previousIndex, !remaining.isEmpty, !remaining.contains(where: { $0.id == previousID })
+      {
         let sibling =
           pairedPreview
-          ? sheets.first(where: { $0.id == previousSheetID })?.visible.first?.id : nil
-        select(sibling ?? pages[min(previousIndex, pages.count - 1)].id)
+          ? SheetGroup.make(store.draft.pages).first(where: { $0.id == previousSheetID })?.visible
+            .first?.id : nil
+        nextSelection = sibling ?? remaining[min(previousIndex, remaining.count - 1)].id
       }
+      refresh(preferredSelection: nextSelection)
+    } catch { failure = error.localizedDescription }
+  }
+  func startOver() {
+    guard canEdit, let store else { return }
+    do {
+      try store.discardDraft()
+      lastExport = nil
+      failure = nil
+      notice = "Ready for a new document."
+      refresh()
     } catch { failure = error.localizedDescription }
   }
   func changeConnection(_ next: ScannerConnection) {
-    guard !scanner.busy else { return }
+    guard !scanner.busy, !exporting else { return }
     scanner.replaceBackend(
       ScannerCatalog.makeBackend(
         staging: root.appendingPathComponent("transfers"), connection: next))
@@ -222,29 +270,36 @@ final class AppModel: ObservableObject {
     guard !scanner.busy, !exporting, !pages.isEmpty, let store else { return }
     exporting = true
     failure = nil
-    DispatchQueue.main.async { [self] in
-      defer {
-        exporting = false
-        refresh()
-      }
-      do {
-        scanner.diagnostics.event("pdf_save_requested", ["pages": pages.count])
+    previewTask?.cancel()
+    scanner.diagnostics.event("pdf_save_requested", ["pages": pages.count])
+    let destination = self.destination
+    let settings = filing.settings
+    let useFiling = settings.enabled && !demo
+    DispatchQueue.global(qos: .userInitiated).async { [self] in
+      let result: Result<URL, Error> = Result {
         let root = destination.resolvingSymlinksInPath().standardizedFileURL
-        let intent =
-          filing.settings.enabled && !demo
-          ? ExportFilingIntent(root: root.path, settings: filing.settings) : nil
-        let output = intent == nil ? destination : root.appendingPathComponent("_Inbox")
-        lastExport = try store.export(to: output, filing: intent)
-        filing.run()
-        scanner.diagnostics.event("pdf_saved")
-        notice = "PDF saved. Ready for a new document."
-      } catch {
-        scanner.diagnostics.event("pdf_save_failed", error: error)
-        failure =
-          "Couldn’t finish saving: \(error.localizedDescription) Your draft is preserved; retry Save PDF."
+        let intent = useFiling ? ExportFilingIntent(root: root.path, settings: settings) : nil
+        return try store.export(
+          to: intent == nil ? destination : root.appendingPathComponent("_Inbox"), filing: intent)
+      }
+      DispatchQueue.main.async {
+        self.exporting = false
+        switch result {
+        case .success(let output):
+          self.lastExport = output
+          self.filing.run()
+          self.scanner.diagnostics.event("pdf_saved")
+          self.notice = "PDF saved. Ready for a new document."
+        case .failure(let error):
+          self.scanner.diagnostics.event("pdf_save_failed", error: error)
+          self.failure =
+            "Couldn’t finish saving: \(error.localizedDescription) Your draft is preserved; retry Save PDF."
+        }
+        self.refresh()
       }
     }
   }
+
   func chooseFolder() {
     guard !exporting, !exportPending else { return }
     let panel = NSOpenPanel()

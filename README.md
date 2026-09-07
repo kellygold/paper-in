@@ -126,3 +126,11 @@ See [contributing](docs/contributing.md) for a first change, [test evidence](doc
 ## License
 
 Paper In's original source is [MIT licensed](LICENSE). Dependencies keep their own licenses, including the proprietary Claude SDK/runtime. See [third-party notices](docs/third-party.md). The beta download preserves vendor runtimes and notices; the published DMG is Developer ID signed and notarized. See [distribution](docs/distribution.md).
+
+### Starting over and clearing filing entries
+
+Use **Start over…** in the document sidebar to clear the current draft after confirmation. Saved PDFs are unaffected; the original scans remain in recovery data.
+
+In **Saved documents**, **Dismiss from list…** stops work on an entry without deleting PDFs. **Clear list…** dismisses the eligible entries together. Use **Show dismissed → Restore to list** to bring one back. Unfinished filing/Undo transactions must finish before dismissal. PDFs moved or deleted in Finder show as missing instead of being silently recreated.
+
+Review entries explain why approval is needed. **Recheck with current preferences** applies updated filing preferences to an existing review. Separate purchases from the same vendor can file automatically; possible duplicates and continuation pages still require approval.

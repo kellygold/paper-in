@@ -325,8 +325,12 @@ test('damaged undiscovered export is reported while other exports file; restorin
   const other = '22222222-2222-4222-8222-222222222222';
   const folder = path.join(root, 'drafts', other);
   await fs.mkdir(folder);
-  const manifest = await fs.readFile(path.join(root, 'drafts', id, 'manifest.json'));
-  await fs.writeFile(path.join(folder, 'manifest.json'), manifest);
+  const manifest = JSON.parse(await fs.readFile(path.join(root, 'drafts', id, 'manifest.json')));
+  const secondOriginal = path.join(root, 'Scans', '_Inbox', 'second-scan.pdf');
+  manifest.id = other;
+  manifest.export.destination = new URL('file://' + secondOriginal).href;
+  await fs.writeFile(secondOriginal, data);
+  await atomicJSON(path.join(folder, 'manifest.json'), manifest);
   const warnings = await engine.run();
   assert.ok(warnings.some((message) => message.includes('saved draft')));
   assert.equal((await engine.load(id)).state, 'filed');
@@ -361,4 +365,63 @@ test('cleanup failure keeps Filed state and never follows an inbox symlink; retr
   assert.equal(await exists(original), false);
   assert.deepEqual(await fs.readFile(job.target), data);
   assert.equal((await fs.readdir(path.join(destination, 'Car/Servicing'))).length, 1);
+});
+
+test('dismissal survives rediscovery and restart; restore retains PDFs and original state', async (t) => {
+  const {engine, root, original, data} = await setup(t);
+  await engine.discover();
+  await engine.dismiss(id);
+  await engine.run();
+  assert.equal((await engine.load(id)).state, 'dismissed');
+  assert.deepEqual(await fs.readFile(original), data);
+  assert.deepEqual(await fs.readFile(path.join(root, 'filing/jobs', id, 'original.pdf')), data);
+  const reopened = new FilingEngine(root);
+  await reopened.discover();
+  assert.equal((await reopened.list()).length, 1);
+  await reopened.restoreEntry(id);
+  assert.equal((await reopened.load(id)).state, 'queued');
+});
+test('bulk dismissal leaves incomplete publication visible and never deletes filed files', async (t) => {
+  const {engine} = await setup(t);
+  await engine.run();
+  let job = await engine.load(id);
+  const target = job.target;
+  await engine.dismissAll();
+  assert.equal((await engine.load(id)).state, 'dismissed');
+  assert.equal(await exists(target), true);
+  await engine.restoreEntry(id);
+  job = await engine.load(id);
+  assert.equal(job.state, 'filed');
+  job.state = 'publishing'; await engine.save(job);
+  await engine.dismissAll();
+  assert.equal((await engine.load(id)).state, 'publishing');
+  await assert.rejects(() => engine.dismiss(id), /Finish or retry/);
+});
+test('externally deleted queued PDF is not recreated or analyzed', async (t) => {
+  let calls = 0;
+  const {engine, original} = await setup(t, {provider: async () => { calls++; return proposal(); }});
+  await fs.rm(original);
+  await engine.run();
+  assert.equal(calls, 0);
+  assert.equal((await engine.load(id)).state, 'missing');
+  assert.equal(await exists(original), false);
+  await engine.dismiss(id); await engine.run();
+  assert.equal((await engine.load(id)).state, 'dismissed');
+});
+test('same vendor separate purchase files automatically; duplicates retain actionable review', async (t) => {
+  const relation = {path:'Car/Servicing/Other.pdf', relationship:'same_vendor', reason:'Different invoice and date; separate purchase.'};
+  const {engine} = await setup(t, {provider:async () => ({...proposal(), related:[relation]}), context:{candidates:[{path:relation.path}]}});
+  await engine.run();
+  assert.equal((await engine.load(id)).state, 'filed');
+  let job = await engine.load(id);
+  job.state = 'review'; job.target = null; await engine.save(job);
+  // Original was cleaned up by successful filing; manual apply must not recreate a deleted PDF.
+  await assert.rejects(() => engine.apply(id), /removed outside/);
+});
+test('folder validation names the offending field and does not publish', async (t) => {
+  const {engine} = await setup(t, {provider: async () => ({...proposal(), needsReview:true})});
+  await engine.run();
+  await assert.rejects(() => engine.apply(id, {folder:'/Receipts',filename:'Receipt.pdf'}), /Folder must be relative/);
+  assert.equal((await engine.load(id)).state, 'review');
+  await assert.rejects(() => engine.apply(id, {folder:'Receipts/2026',filename:'bad:name.pdf'}), /Filename must end/);
 });

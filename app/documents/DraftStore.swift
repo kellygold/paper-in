@@ -111,6 +111,12 @@ final class DraftStore {
       throw error
     }
   }
+  /// Switch the durable pointer before touching old data; retained sources allow recovery.
+  func discardDraft() throws {
+    try editable()
+    guard draft.capture == nil else { throw PaperError("Stop scanning before starting over.") }
+    try newDraft()
+  }
   func durableWrite(_ data: Data, to destination: URL) throws {
     try beforeWrite?(destination)
     let temp = destination.deletingLastPathComponent().appendingPathComponent(

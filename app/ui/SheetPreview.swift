@@ -10,7 +10,7 @@ struct SheetPreview: View {
         side(sheet, index: 1)
       }.background(Color.gray.opacity(0.3))
     } else {
-      PagePreview(document: model.preview)
+      PagePreview(image: model.preview, loading: model.previewLoading)
     }
   }
   private func side(_ sheet: SheetGroup, index: Int) -> some View {
@@ -26,7 +26,7 @@ struct SheetPreview: View {
         }
       }.padding(12).background(model.selected == page?.id ? Color.green.opacity(0.09) : Color.white)
       if let page, !page.removed {
-        PagePreview(document: model.sheetPreviews[page.id])
+        PagePreview(image: model.sheetPreviews[page.id], loading: model.previewLoading)
       } else {
         VStack(spacing: 12) {
           Image(systemName: "doc.badge.ellipsis").font(.largeTitle)

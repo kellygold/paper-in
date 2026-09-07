@@ -99,6 +99,10 @@ struct FilingReviewView: View {
   @State private var selected: String?
   @State private var folder = ""
   @State private var filename = ""
+  @State private var showDismissed = false
+  @State private var confirmDismiss = false
+  @State private var dismissTarget: String?
+  var visibleJobs: [FilingJob] { filing.jobs.filter { showDismissed || $0.state != "dismissed" } }
   var selectedJob: FilingJob? { filing.jobs.first { $0.id == selected } }
   var body: some View {
     VStack(alignment: .leading, spacing: 14) {
@@ -114,7 +118,7 @@ struct FilingReviewView: View {
       HStack(alignment: .top, spacing: 20) {
         ScrollView {
           LazyVStack(alignment: .leading, spacing: 8) {
-            ForEach(filing.jobs) { job in
+            ForEach(visibleJobs) { job in
               Button {
                 choose(job)
               } label: {
@@ -130,49 +134,87 @@ struct FilingReviewView: View {
           }
         }.frame(width: 250)
         if let job = selectedJob {
-          VStack(alignment: .leading, spacing: 12) {
-            Text(job.stateLabel).font(.headline)
-            if let proposal = job.proposal {
-              Text(proposal.reason).font(.callout).textSelection(.enabled)
-              TextField("Folder relative to your scan folder", text: $folder)
-              TextField("Filename.pdf", text: $filename)
-              ForEach(proposal.related) { relation in
-                VStack(alignment: .leading, spacing: 3) {
-                  Text("\(relation.relationship.capitalized): \(relation.path)").font(
-                    .caption.bold())
-                  Text(relation.reason).font(.caption)
+          ScrollView {
+            VStack(alignment: .leading, spacing: 12) {
+              Text(job.stateLabel).font(.headline)
+              if job.fileMissing == true, job.state != "dismissed" {
+                Text(
+                  "This PDF was moved or deleted outside Paper In. Dismiss this entry if you no longer need it. A recovery copy is still available below."
+                )
+                .font(.callout).foregroundStyle(.orange)
+              }
+              if let proposal = job.proposal {
+                if job.state == "review" {
+                  Text("Why approval is needed").font(.subheadline.bold())
+                  ForEach(
+                    job.reviewReasons ?? [
+                      proposal.related.isEmpty
+                        ? "Confirm the suggested name and folder."
+                        : "A related receipt was found. Confirm whether this is a separate document."
+                    ], id: \.self
+                  ) { reason in
+                    Text("• " + reason).font(.callout)
+                  }
+                }
+                Text(proposal.reason).font(.callout).textSelection(.enabled)
+                Text("Folder inside your scan folder").font(.caption).foregroundStyle(.secondary)
+                TextField("For example, Receipts/2026/Academy Brand", text: $folder)
+                Text("PDF filename").font(.caption).foregroundStyle(.secondary)
+                TextField("Filename.pdf", text: $filename)
+                ForEach(proposal.related) { relation in
+                  VStack(alignment: .leading, spacing: 3) {
+                    Text("\(relation.relationship.capitalized): \(relation.path)").font(
+                      .caption.bold())
+                    Text(relation.reason).font(.caption)
+                  }
+                }
+                if job.state == "review", job.fileMissing != true {
+                  Button("File with this name and folder") {
+                    filing.perform("apply", id: job.id, folder: folder, filename: filename)
+                  }.disabled(filing.busy)
                 }
               }
-              if job.state == "review" {
-                Button("File with this name and folder") {
-                  filing.perform("apply", id: job.id, folder: folder, filename: filename)
+              if let error = job.error { Text(error).foregroundStyle(.orange).font(.callout) }
+              if job.state == "filed", job.fileMissing != true {
+                Button("Undo filing") { filing.perform("undo", id: job.id) }.disabled(filing.busy)
+              }
+              if ["failed", "undone", "review", "missing", "publishing", "undoing"].contains(
+                job.state), job.fileMissing != true
+              {
+                Button(
+                  ["publishing", "undoing"].contains(job.state)
+                    ? "Retry filing" : "Recheck with current preferences"
+                ) {
+                  filing.perform("retry", id: job.id)
                 }.disabled(filing.busy)
               }
-            }
-            if let error = job.error { Text(error).foregroundStyle(.orange).font(.callout) }
-            if job.state == "filed" {
-              Button("Undo filing") { filing.perform("undo", id: job.id) }.disabled(filing.busy)
-            }
-            if ["failed", "undone", "publishing", "undoing"].contains(job.state) {
-              Button(
-                ["publishing", "undoing"].contains(job.state) ? "Retry filing" : "Retry analysis"
-              ) {
-                filing.perform("retry", id: job.id)
-              }.disabled(filing.busy)
-            }
-            if job.state == "filed" && job.error != nil {
-              Button("Retry inbox cleanup") { filing.perform("apply", id: job.id) }
-                .disabled(filing.busy)
-            }
-            Button("Show PDF in Finder") {
-              let path = job.state == "filed" ? (job.target ?? job.original) : job.original
-              NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
-            }
-            Text(
-              "All originals are kept in Paper In’s application data. Filing never merges or deletes a related document."
-            ).font(.caption).foregroundStyle(.secondary)
-            Spacer()
-          }.frame(maxWidth: .infinity, alignment: .leading)
+              if job.state == "filed" && job.error != nil {
+                Button("Retry inbox cleanup") { filing.perform("apply", id: job.id) }
+                  .disabled(filing.busy)
+              }
+              if job.state == "dismissed" {
+                Button("Restore to list") { filing.perform("restoreEntry", id: job.id) }.disabled(
+                  filing.busy)
+              } else {
+                Button("Dismiss from list…", role: .destructive) {
+                  dismissTarget = job.id
+                  confirmDismiss = true
+                }.disabled(filing.busy || ["publishing", "undoing"].contains(job.state))
+              }
+              Button("Show retained original") {
+                let copy = filing.root.appendingPathComponent("filing/jobs/\(job.id)/original.pdf")
+                NSWorkspace.shared.activateFileViewerSelecting([copy])
+              }
+              Button("Show PDF in Finder") {
+                let path = job.state == "filed" ? (job.target ?? job.original) : job.original
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: path)])
+              }.disabled(job.fileMissing == true)
+              Text(
+                "All originals are kept in Paper In’s application data. Filing never merges or deletes a related document."
+              ).font(.caption).foregroundStyle(.secondary)
+              Spacer()
+            }.frame(maxWidth: .infinity, alignment: .leading)
+          }
         } else {
           Text(
             filing.jobs.isEmpty
@@ -183,16 +225,48 @@ struct FilingReviewView: View {
       }.frame(height: 400)
       if let error = filing.error { Text(error).font(.caption).foregroundStyle(.orange) }
       HStack {
-        Button("Resume queue") { filing.run() }.disabled(filing.busy || !filing.settings.enabled)
+        if filing.busy {
+          Button("Pause organizing") { filing.stop() }
+        } else {
+          Button("Resume queue") { filing.run() }.disabled(!filing.settings.enabled)
+        }
+        Button("Clear list…", role: .destructive) {
+          dismissTarget = nil
+          confirmDismiss = true
+        }.disabled(filing.busy || visibleJobs.isEmpty || showDismissed)
+        Toggle("Show dismissed", isOn: $showDismissed).toggleStyle(.checkbox)
         Spacer()
-        Text("\(filing.jobs.count) saved documents").font(.caption).foregroundStyle(.secondary)
+        Text("\(visibleJobs.count) documents").font(.caption).foregroundStyle(.secondary)
       }
     }.padding(24).frame(width: 850).background(Color(red: 0.98, green: 0.975, blue: 0.96))
       .textFieldStyle(.roundedBorder)
-      .onAppear { if let first = filing.jobs.first { choose(first) } }
+      .onAppear { if let first = visibleJobs.first { choose(first) } }
+      .onChange(of: visibleJobs.map(\.id)) { _, ids in
+        if selected == nil || !ids.contains(selected!) {
+          if let first = visibleJobs.first { choose(first) } else { selected = nil }
+        }
+      }
+      .alert(
+        dismissTarget == nil ? "Clear the document list?" : "Dismiss this entry?",
+        isPresented: $confirmDismiss
+      ) {
+        Button("Cancel", role: .cancel) {}
+        Button("Dismiss", role: .destructive) {
+          if let id = dismissTarget {
+            filing.perform("dismiss", id: id)
+          } else {
+            filing.perform("dismissAll")
+          }
+        }
+      } message: {
+        Text(
+          "Saved PDFs and recovery copies are kept. Dismissed entries stop processing and can be restored using Show dismissed. Unfinished filing transactions must be resolved first."
+        )
+      }
   }
   func choose(_ job: FilingJob) {
     selected = job.id
+    filing.error = nil
     folder = job.proposal?.folder ?? ""
     filename = job.proposal?.filename ?? ""
   }
@@ -205,7 +279,7 @@ struct FilingToolbar: View {
     HStack(spacing: 12) {
       Button(filing.settings.enabled ? "AI filing on" : "AI filing…") { settingsOpen = true }
       Button(
-        "Saved documents\(filing.jobs.filter { ["review","failed"].contains($0.state) }.isEmpty ? "" : " · needs review")"
+        "Saved documents\(filing.jobs.filter { ["review", "failed", "missing"].contains($0.state) }.isEmpty ? "" : " · needs attention")"
       ) { reviewOpen = true }
       if filing.busy {
         ProgressView().controlSize(.mini)

@@ -1,3 +1,4 @@
+import { reviewReasons } from './review-policy.mjs';
 import { workerSignal } from './cancellation.mjs';
 import fs from 'node:fs/promises';
 import path from 'node:path';
@@ -96,6 +97,12 @@ export class FilingEngine {
     }
   }
   async analyze(job, secrets = {}) {
+    if (!(await exists(job.original))) {
+      job.state = 'missing';
+      job.error = 'The saved PDF was removed outside Paper In. Dismiss this entry, or recover its retained original.';
+      await this.save(job);
+      return;
+    }
     job.state = 'analyzing';
     job.error = null;
     await this.save(job);
@@ -127,25 +134,13 @@ export class FilingEngine {
         );
       const first = await ask();
       const second = await ask(first);
-      validRelative(second.filename, { pdf: true });
-      if (second.filename.includes('/')) throw new Error('Filename must not contain directories.');
-      validRelative(second.folder);
+      validateDestination(second);
       await confined(job.root, second.folder + '/' + second.filename);
       const known = new Set(context.candidates.map((c) => c.path));
       if (second.related.some((r) => !known.has(r.path)))
         throw new Error('Provider referred to an unknown document.');
-      const changed = first.folder !== second.folder || first.filename !== second.filename;
-      second.needsReview ||=
-        first.needsReview ||
-        changed ||
-        document.truncated ||
-        document.lowConfidence ||
-        document.lowText ||
-        context.limited ||
-        !!context.duplicate ||
-        second.related.length > 0 ||
-        !context.folders.includes(second.folder) ||
-        Math.min(first.confidence, second.confidence) < 0.92;
+      job.reviewReasons = reviewReasons(first, second, document, context);
+      second.needsReview = job.reviewReasons.length > 0;
       if (context.duplicate && !second.related.some((r) => r.path === context.duplicate))
         second.related.push({
           path: context.duplicate,
@@ -183,9 +178,9 @@ export class FilingEngine {
       job.proposal = { ...job.proposal, folder: override.folder, filename: override.filename };
     }
     const p = job.proposal;
-    validRelative(p.folder);
-    validRelative(p.filename, { pdf: true });
-    if (p.filename.includes('/')) throw new Error('Filename must not contain directories.');
+    validateDestination(p);
+    if (job.state === 'review' && !(await exists(job.original)))
+      throw new Error('The saved PDF was removed outside Paper In. Dismiss this entry, or recover its retained original.');
     if (!job.target) {
       const relative = p.folder + '/' + p.filename;
       let target = await confined(job.root, relative, true);
@@ -274,6 +269,26 @@ export class FilingEngine {
     await this.save(job);
     return job;
   }
+  async dismiss(id) {
+    const job = await this.load(id);
+    if (job.state === 'dismissed') return;
+    if (['publishing', 'undoing'].includes(job.state))
+      throw new Error('Finish or retry this filing operation before dismissing it.');
+    job.dismissedState = job.state === 'analyzing' ? 'queued' : job.state;
+    job.state = 'dismissed';
+    await this.save(job);
+  }
+  async dismissAll() {
+    for (const job of await this.list())
+      if (!['publishing', 'undoing', 'dismissed'].includes(job.state)) await this.dismiss(job.id);
+  }
+  async restoreEntry(id) {
+    const job = await this.load(id);
+    if (job.state !== 'dismissed') throw new Error('This entry is not dismissed.');
+    job.state = job.dismissedState || 'review';
+    delete job.dismissedState;
+    await this.save(job);
+  }
   async retry(id, settings) {
     const job = await this.load(id);
     if (['publishing', 'undoing'].includes(job.state)) {
@@ -281,7 +296,7 @@ export class FilingEngine {
       await this.save(job);
       return;
     }
-    if (!['failed', 'undone'].includes(job.state)) throw new Error('This job cannot be retried.');
+    if (!['failed', 'undone', 'review', 'missing'].includes(job.state)) throw new Error('This job cannot be retried.');
     job.state = 'queued';
     job.error = null;
     job.target = null;
@@ -340,4 +355,15 @@ export async function withLock(root, action) {
   } finally {
     await fs.rm(lock, { recursive: true, force: true });
   }
+}
+
+function validateDestination(proposal) {
+  for (const field of ['folder', 'filename']) {
+    if (typeof proposal[field] === 'string') proposal[field] = proposal[field].trim();
+    try { validRelative(proposal[field], { pdf: field === 'filename' }); }
+    catch { throw new Error(field === 'folder'
+      ? 'Folder must be relative, such as Receipts/2026. Remove empty segments, leading slashes, colons and spaces around folder names.'
+      : 'Filename must end in .pdf and cannot contain colons, slashes or control characters.'); }
+  }
+  if (proposal.filename.includes('/')) throw new Error('Filename cannot contain folders or slashes.');
 }
