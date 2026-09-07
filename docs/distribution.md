@@ -30,7 +30,7 @@ python3 -m http.server 8766 --bind 127.0.0.1 --directory site
 
 Open `http://127.0.0.1:8766`. Check desktop and narrow mobile widths, the setup page, keyboard navigation and download links. The setup page is self-contained because the DMG also includes it offline.
 
-GitHub Pages uses `.github/workflows/pages.yml`; only `site/` is uploaded. Select **GitHub Actions** as the Pages build source in repository settings. Changes on `main` publish to `https://paper-in.dev/`. Release binaries belong in GitHub Releases, not the Pages artifact.
+GitHub Pages uses `.github/workflows/pages.yml`; only `site/` is uploaded. Select **GitHub Actions** as the Pages build source in repository settings. Changes on `main` publish to `https://paper-in.app/`. Release binaries belong in GitHub Releases, not the Pages artifact.
 
 ## Release order
 
@@ -43,7 +43,7 @@ Never commit signing keys, notarization credentials, `.build`, app bundles or pe
 
 ## Custom domain
 
-The intended public address is `https://paper-in.dev/`, hosted on GitHub Pages. GitHub repository Settings → Pages owns the custom-domain setting because this site deploys through Actions. A CNAME file is not required by that workflow.
+The intended public address is `https://paper-in.app/`, hosted on GitHub Pages. GitHub repository Settings → Pages owns the custom-domain setting because this site deploys through Actions. A CNAME file is not required by that workflow.
 
 Squarespace manages DNS. Replace the Squarespace default website records with four apex (`@`) A records: `185.199.108.153`, `185.199.109.153`, `185.199.110.153` and `185.199.111.153`. Set `www` CNAME to `kellygold.github.io` (without a repository path). Remove conflicting default web/HTTPS records; preserve email and Domain Connect records. Use the provider's default TTL or a shorter supported TTL during the change.
 
