@@ -1,0 +1,53 @@
+{
+  "candidate": "809b483abd5c0e62866a2ffe326fc6ee6f84407b",
+  "timestamp": "2026-09-07T15:28:00.181824+00:00",
+  "authenticated": false,
+  "checks": [
+    {
+      "path": "assets/app-preview.png",
+      "status": 200,
+      "sha256": "a271e4df7bd4c8ef2155bf089275d4061869a94eae2675caff302e64cbdeb624",
+      "sourceMatches": true
+    },
+    {
+      "path": "assets/mark.svg",
+      "status": 200,
+      "sha256": "33f17dcee54815d55ff6628663f854904507f5d2ab7e4514e4613f45194de52d",
+      "sourceMatches": true
+    },
+    {
+      "path": "index.html",
+      "status": 200,
+      "sha256": "b046af13ad70b6c01db5e92d380e74d74b894631312c3b9022a82c1eaa30c622",
+      "sourceMatches": true
+    },
+    {
+      "path": "install.html",
+      "status": 200,
+      "sha256": "4345ef249f9c62bc954a8ae331c9b7afac94a8b6a49fc210b32ef2611f6cad3b",
+      "sourceMatches": true
+    },
+    {
+      "path": "robots.txt",
+      "status": 200,
+      "sha256": "16ceb5ee3e0dc13aa9adf31a3ebbe45a1d965b8c2b9f72eaf84e5911e140ed95",
+      "sourceMatches": true
+    },
+    {
+      "path": "style.css",
+      "status": 200,
+      "sha256": "00ddae6e029172b28026cc27959a92ffbc2247d18b72721baed657492ea79582",
+      "sourceMatches": true
+    },
+    {
+      "url": "http://paper-in.app/",
+      "final": "https://paper-in.app/",
+      "status": 200
+    },
+    {
+      "url": "https://www.paper-in.app/",
+      "final": "https://paper-in.app/",
+      "status": 200
+    }
+  ]
+}

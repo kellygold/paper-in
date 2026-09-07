@@ -1,0 +1,16 @@
+{
+  "timestamp": "2026-09-07T15:28:54.531174+00:00",
+  "failedSyntheticFixtureRootsRemoved": [
+    "PaperIn-Searchable-EF479BA8-6003-416B-B194-911F92A0F26B",
+    "PaperIn-Searchable-306D804E-543D-4AEE-A93E-9B435D449BF1",
+    "PaperIn-Searchable-8C43253C-B2CC-4E6F-AD44-B1A900096A09"
+  ],
+  "remainingNamedFixtureRoots": 0,
+  "disposableWorktreesRemoved": [
+    "review-searchable",
+    "validate-searchable"
+  ],
+  "redundantPackagedAppCopiesRemoved": true,
+  "installedAppDMGProofAndRollbackRetained": true,
+  "personalDocumentsChanged": false
+}
