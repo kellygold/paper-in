@@ -23,13 +23,22 @@ defer {
 func fixture(_ name: String, width: Int, height: Int) throws -> URL {
   let bitmap = NSBitmapImageRep(
     bitmapDataPlanes: nil, pixelsWide: width, pixelsHigh: height,
-    bitsPerSample: 8, samplesPerPixel: 3, hasAlpha: false, isPlanar: false,
+    bitsPerSample: 8, samplesPerPixel: 4, hasAlpha: true, isPlanar: false,
     colorSpaceName: .deviceRGB, bytesPerRow: 0, bitsPerPixel: 0)!
   memset(bitmap.bitmapData!, 245, bitmap.bytesPerRow * bitmap.pixelsHigh)
   // Stripes make rotations/crops visible; all content is synthetic.
   for y in stride(from: 100, to: height - 100, by: 250) {
     memset(bitmap.bitmapData! + y * bitmap.bytesPerRow, 35, bitmap.bytesPerRow * 5)
   }
+  // Real text exercises local searchable-PDF export, not just image encoding.
+  NSGraphicsContext.saveGraphicsState()
+  NSGraphicsContext.current = NSGraphicsContext(bitmapImageRep: bitmap)!
+  for y in stride(from: 160, to: height - 100, by: 250) {
+    ("Paper In sample item \(y)   AUD 139.00" as NSString).draw(
+      at: NSPoint(x: 120, y: y),
+      withAttributes: [.font: NSFont.systemFont(ofSize: 42), .foregroundColor: NSColor.black])
+  }
+  NSGraphicsContext.restoreGraphicsState()
   let file = model.root.appendingPathComponent(name)
   try bitmap.representation(using: .png, properties: [:])!.write(to: file)
   return file
@@ -106,6 +115,7 @@ for count in [5, 10, 15] {
   precondition(model.pages.isEmpty && model.failure == nil)
   let output = model.lastExport!
   precondition(PDFDocument(url: output)?.pageCount == count)
+  precondition(PDFDocument(url: output)?.page(at: 0)?.string?.contains("139.00") == true)
   // Full resolution exports retain original physical page dimensions.
   let first = PDFDocument(url: output)!.page(at: 0)!.bounds(for: .mediaBox)
   precondition(abs(first.height - 7000.0 * 72 / 300) < 1)

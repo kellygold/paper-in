@@ -35,7 +35,8 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Change how related documents are found | [ai/library.mjs](../ai/library.mjs) |
 | Understand file safety and Undo | [ai/engine.mjs](../ai/engine.mjs), [files.mjs](../ai/files.mjs) |
 | Change Codex tool isolation | [ai/providers/codex-isolation.mjs](../ai/providers/codex-isolation.mjs) |
-| Change local OCR | [ai/ocr.m](../ai/ocr.m) |
+| Change searchable PDF export | [app/documents/SearchablePDF.swift](../app/documents/SearchablePDF.swift), [TextRecognition.m](../app/documents/TextRecognition.m) |
+| Change OCR used for AI filing and confidence checks | [ai/ocr.m](../ai/ocr.m) |
 | Run tests or debug the build | [development.md](development.md) |
 
 ## Inside each folder

@@ -7,12 +7,13 @@ int main(int argc, const char *argv[]) { @autoreleasepool {
     if (argc != 2) { fprintf(stderr, "Expected a PDF path\n"); return 2; }
     PDFDocument *pdf = [[PDFDocument alloc] initWithURL:[NSURL fileURLWithPath:@(argv[1])]];
     if (!pdf || pdf.isLocked || pdf.pageCount == 0) { fprintf(stderr, "PDF is unreadable or locked\n"); return 2; }
+    BOOL paperInOCR = [pdf.documentAttributes[PDFDocumentCreatorAttribute] isEqual:@"Paper In (searchable PDF)"];
     NSMutableArray *pages = [NSMutableArray array];
     for (NSUInteger i=0; i<pdf.pageCount; i++) { @autoreleasepool {
         PDFPage *page = [pdf pageAtIndex:i];
         NSString *text = page.string;
         double confidence = 1;
-        if (text.length < 20) {
+        if (paperInOCR || text.length < 20) {
             CGRect bounds = [page boundsForBox:kPDFDisplayBoxMediaBox];
             double scale = MIN(3.0, 2600.0 / MAX(bounds.size.width, bounds.size.height));
             NSImage *thumb = [page thumbnailOfSize:NSMakeSize(bounds.size.width*scale, bounds.size.height*scale) forBox:kPDFDisplayBoxMediaBox];

@@ -369,7 +369,9 @@ final class DraftStore {
     if draft.export == nil {
       let doc = PDFDocument()
       for (index, page) in visiblePages.enumerated() { doc.insert(try pdfPage(page), at: index) }
-      guard let data = doc.dataRepresentation(), let check = PDFDocument(data: data),
+      let pages = visiblePages
+      let data = try SearchablePDF.data(for: doc) { try self.image(for: pages[$0]) }
+      guard let check = PDFDocument(data: data),
         check.pageCount == visiblePages.count
       else { throw PaperError("PDF verification failed. Your pages are still saved.") }
       try durableWrite(data, to: folder.appendingPathComponent("export.pdf"))

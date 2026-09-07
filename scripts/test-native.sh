@@ -8,6 +8,9 @@ source scripts/project.sh
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/Documents/main.swift -o .build/store-tests
 .build/store-tests
 
+xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" tests/app/SearchablePDF/main.swift -o .build/searchable-pdf-tests
+.build/searchable-pdf-tests "$PWD/.build/Paper In.app/Contents/Resources/PaperOCR"
+
 xcrun swiftc "${paper_swift[@]}" "${paper_documents[@]}" app/support/Diagnostics.swift tests/app/Connection/LegacyScanner.swift tests/app/Connection/main.swift -o .build/connection-tests
 .build/connection-tests
 
