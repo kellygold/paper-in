@@ -1,0 +1,43 @@
+{
+  "candidate": "fcf7b1898f4c3642c5f088dc7224b089b8c6ba67",
+  "app_notary": {
+    "message": "Processing complete",
+    "id": "99974ae0-56ba-4ec0-a260-c42f76105e84",
+    "status": "Accepted"
+  },
+  "dmg_notary": {
+    "status": "Accepted",
+    "message": "Processing complete",
+    "id": "c91757d9-74d7-4b45-82a4-44632d0274f0"
+  },
+  "dependencies": {
+    "dependency_files_identical": 6041,
+    "node_license": true,
+    "codex_notice": true,
+    "offline_instructions_match": true
+  },
+  "public_download": {
+    "url": "https://github.com/kellygold/paper-in/releases/download/v0.4.1/Paper-In-0.4.1-arm64.dmg",
+    "status": 200,
+    "bytes": 270101525,
+    "sha256": "88c3475992c19b5e79ea7cb4149249477fc8fac988b0e6c3e1ea86da62c96f3e",
+    "authenticated": false,
+    "seconds": 4.8
+  },
+  "copied_dmg_app_checks": [
+    "stapler",
+    "strict/deep codesign",
+    "Gatekeeper",
+    "syspolicy_check",
+    "Node v22.23.2"
+  ],
+  "installed": {
+    "version": "0.4.1",
+    "build": "18",
+    "running": true,
+    "draft_pointer_and_manifest_unchanged": true,
+    "previous_app_retained": true
+  },
+  "release": "https://github.com/kellygold/paper-in/releases/tag/v0.4.1",
+  "user_documents_modified": 0
+}
