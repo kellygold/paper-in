@@ -1,0 +1,27 @@
+name: Bug report
+description: Report a problem with scanning, PDFs, filing or the app interface.
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please use fictional documents and redact logs. Do not attach personal scans, account details or credentials.
+        For security vulnerabilities, use [private reporting](https://github.com/kellygold/paper-in/security/advisories/new).
+  - type: input
+    id: environment
+    attributes:
+      label: Versions and scanner
+      description: Paper In version, macOS version, Mac architecture, scanner model and USB or Wi-Fi.
+    validations:
+      required: true
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Steps to reproduce
+      description: What did you do, what did you expect, and what happened instead? Include the exact error if available.
+    validations:
+      required: true
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Redacted diagnostics or synthetic examples
+      description: Optional. Remove personal content, file paths, network addresses and account details before sharing.

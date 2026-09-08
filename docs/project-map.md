@@ -18,9 +18,10 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | I want to… | Start here |
 | --- | --- |
 | See how the app starts | [app/App.swift](../app/App.swift) |
-| Change the main window or controls | [app/ui/ContentView.swift](../app/ui/ContentView.swift) |
+| Change the main window or scan controls | [app/ui/ContentView.swift](../app/ui/ContentView.swift), [ScanControls.swift](../app/ui/ScanControls.swift) |
 | Change what Scan or Save does | [app/ui/AppModel.swift](../app/ui/AppModel.swift) |
 | Change the paired preview or zoom | [app/ui/SheetPreview.swift](../app/ui/SheetPreview.swift), [PagePreview.swift](../app/ui/PagePreview.swift) |
+| Change preview decoding and caching | [app/ui/PreviewRenderer.swift](../app/ui/PreviewRenderer.swift) |
 | Understand draft recovery or PDF creation | [app/documents/DraftStore.swift](../app/documents/DraftStore.swift) |
 | Change page pairing or cropping | [app/documents/SheetGroup.swift](../app/documents/SheetGroup.swift), [AutoCrop.swift](../app/documents/AutoCrop.swift) |
 | Change blank-page detection | [app/documents/BlankPageDetector.swift](../app/documents/BlankPageDetector.swift), [ShadowedPaperDetector.swift](../app/documents/ShadowedPaperDetector.swift); reversible decisions are stored by [DraftStore.swift](../app/documents/DraftStore.swift) |
@@ -30,7 +31,7 @@ Paper → Scanner → Draft → Save PDF → AI suggestion → Review or file
 | Change AI settings or the review screen | [app/filing/FilingViews.swift](../app/filing/FilingViews.swift) |
 | Understand how Swift starts the AI process | [app/filing/FilingController.swift](../app/filing/FilingController.swift) |
 | Change the naming instructions or AI response format | [ai/schema.mjs](../ai/schema.mjs) |
-| Change when documents need review | [ai/engine.mjs](../ai/engine.mjs) |
+| Change when documents need review | [ai/review-policy.mjs](../ai/review-policy.mjs); [engine.mjs](../ai/engine.mjs) applies the decision |
 | Add an AI provider | [ai/providers/registry.mjs](../ai/providers/registry.mjs), then [provider-catalog.json](../ai/provider-catalog.json) |
 | Change how related documents are found | [ai/library.mjs](../ai/library.mjs) |
 | Understand file safety and Undo | [ai/engine.mjs](../ai/engine.mjs), [files.mjs](../ai/files.mjs) |
