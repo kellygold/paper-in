@@ -1,21 +1,28 @@
 # Validation
 
-Status: 0.4.1 published and installed on 8 September 2026. All 98 offline checks, mounted native UI/performance checks, independent queue validation and final CI passed. The app and DMG are Developer ID signed, notarized and stapled; an anonymous full release download matched its SHA-256 checksum. The additional different-lab review found no blocking code defect; its publish-assets-before-merge requirement was satisfied. See [PR #10 evidence](https://github.com/kellygold/paper-in/pull/10#issuecomment-5568895463) for receipts and limits.
+Status: 0.4.2 published and installed on 8 September 2026. All 101 offline checks and app signature verification passed in [post-merge macOS 15 CI](https://github.com/kellygold/paper-in/actions/runs/34138388646). Independent searchable-PDF validation and the final different-lab review passed. The app and DMG are Developer ID signed, notarized and stapled; an anonymous full release download matched its SHA-256 checksum. See [PR #12 evidence](https://github.com/kellygold/paper-in/pull/12#issuecomment-5572683151) for receipts, performance measurements and limits. Earlier queue and responsiveness evidence is retained in [PR #10](https://github.com/kellygold/paper-in/pull/10#issuecomment-5568895463).
 
 ## Automated checks
 
-`./test.sh` builds the application and passes 98 offline checks (66 native, 32 worker) without contacting scanners or providers.
+`./test.sh` builds the application and passes 101 offline checks (69 native, 32 worker) without contacting scanners or providers.
 
 - 14 draft/PDF scenarios: original-byte retention, restart and same-process recovery, interrupted capture/export, collision refusal, edits, 40-page documents, image orientation, explicit sheet pairing, legacy pages, durable AI handoff and discard/restart/failure recovery.
 - 5 eSCL transport scenarios: rejected jobs, foreign job URLs, complete image/PDF delivery, incomplete images and status parsing (some assertions share a scenario).
 - 5 crop scenarios: cards, receipts, blank pages, physical PDF sizes, scanner padding, reversible metadata and unchanged original bytes.
 - 1 maximum-length receipt scenario: retains both ends through crop, restart, preview and one tall PDF, with original bytes preserved.
+- 3 searchable-PDF checks: persisted text on ordinary and long receipts, strip-boundary lines, rotated/blank/removed pages and restart; unchanged rendered pixels, geometry and original bytes; and filing-confidence checks that do not trust an incorrect embedded OCR layer.
 - 12 blank-page scenarios: white/noisy paper and specks; faint, tiny, edge and coloured marks; uncertain backgrounds; either-side, simplex and import skipping; all-blank drafts; unchanged originals; PDF page counts; restoration, restart and interrupted-ingest recovery; skewed receipt silhouettes and broad shadows with crop enabled or disabled.
 - 2 legacy ImageCapture connection scenarios retained as regression fixtures.
 - 4 shared scanner-session contract scenarios: capabilities, scan options, ordered pages, consumer storage failure, pause and transport replacement without losing draft callbacks.
 - 15 scanner transport scenarios: local endpoint validation plus shared USB/Wi-Fi duplex delivery, duplicate-start prevention, missing-back preservation, empty/jammed feeder refusal, wrong-model rejection and stale discovery callbacks.
 - 8 native application-flow scenarios: paired selection, per-side edit/removal/restoration, adding another sheet and saving a four-page PDF; capture callbacks skip a blank back, update previews, restore that exact side and save both pages; side preferences across paper modes, visible order after moving a page, recovered legacy pages after crop failure and the saved model in the mounted settings view, asynchronous previews and a healthy front when the back image is damaged.
 - 32 worker scenarios: idempotent export discovery, both classification passes, mandatory review, failed/retried analysis, malformed outputs, traversal/symlink rejection, output collisions, interrupted publication/Undo, changed-file preservation, stale locks, corrupted originals, provider registry consistency, both API wire formats, incomplete responses, missing credentials/rate limits and credential-safe errors. Recovery tests cover unavailable destinations during publishing/Undo, malformed or incomplete records, retryable inbox cleanup and Codex tool isolation across TOML syntax without starting configured commands. Additional checks cover reversible dismissal, unfinished transaction protection, missing PDFs, path error messages and same-vendor versus duplicate review rules.
+
+## Searchable PDFs (0.4.2)
+
+An independent Poppler reader extracted the expected text exactly once from ordinary, rotated and 1.52 m synthetic receipts, including both tested strip boundaries. Five extracted full-resolution images had identical hashes before and after recognition; the blank page remained text-free. This checks persisted PDF text rather than Preview's on-demand Live Text. The source images, page sizes and rotations were preserved.
+
+With readable text added to the mounted native UI fixtures, 5-, 10- and 15-page background saves took 2.99, 5.30 and 7.69 seconds on the development Mac. Maximum main-loop gaps during save were 22, 25 and 22 ms; removal dispatch stayed below 1 ms. These timings include recognition and vary by document and machine. Recognition remains imperfect on faint text, handwriting and unusual layouts. No physical scanner or live provider was used for this change.
 
 ## Responsiveness and filing controls (0.4.1)
 
@@ -75,11 +82,11 @@ The `app/`, `ai/`, and unified `tests/` layout passed all 47 existing automated 
 
 `./scripts/live-native-test.sh` reproduces the packaged-worker check using generated content and the existing Codex login. It consumes provider quota and retains evidence under `.build/live-native-*`.
 
-## Before a public binary release
+## Remaining compatibility coverage
 
 - Verify a fresh physical single-sided and duplex scan using the new build, including missing-back behavior and restart recovery.
 - Run live API-key checks for the selected default/example models.
-- Validate build instructions on a clean supported Mac, then complete Developer ID signing/notarization and dependency redistribution review.
+- Validate first installation on a separate clean supported Mac. macOS CI and same-Mac installation are verified; they do not establish every clean-machine setup. Developer ID signing, notarization, stapling and dependency notices are verified for the published DMG.
 - Confirm the public app's provider authentication eligibility; technical success does not resolve provider terms.
 - Publish a compatibility list with observed hardware results, not inferred support.
 

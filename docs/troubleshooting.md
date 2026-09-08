@@ -13,14 +13,14 @@ AI filing applies to new saves after it is enabled. It does not automatically qu
 Open **Saved documents** and inspect the status:
 
 - **Needs review:** check the folder and filename, then approve it.
-- **Needs attention:** read the error, correct login/model/key settings, then **Retry analysis**. Retry uses your current settings.
+- **Needs attention:** read the error, correct login/model/key settings, then **Recheck with current preferences**. For an interrupted file operation, use **Retry filing** instead.
 - **Waiting to organize:** use **Resume queue** with AI filing enabled.
 
 The PDF remains saved if a provider fails. Weak OCR, a new folder, a potential duplicate, or disagreement between checks can require review even when automatic filing is enabled.
 
 ## AI filing cannot start
 
-Check that Node.js 22+ is installed. The app can detect common Homebrew and nvm locations; an explicit executable path can be set in **AI filing → Runtime paths**. Check the selected provider's [login or API setup](providers.md). Scanning does not require AI to be available.
+The DMG includes Node; a separate installation is not needed. For source builds or a custom runtime, check that Node.js 22+ is installed. The app can detect common Homebrew and nvm locations; an explicit executable path can be set in **AI filing → Runtime paths**. Clear an outdated override to use the bundled default. Check the selected provider's [login or API setup](providers.md). Scanning does not require AI to be available.
 
 ## Scanner cannot connect, reports no paper, or ends without an image
 

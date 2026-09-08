@@ -11,6 +11,7 @@ Paper In currently supports the **Brother DS-940DW over USB**, with experimental
 ## What it does
 
 - **One document, as many pages as you need.** Scan a sheet, add another, save one PDF.
+- **Searchable PDFs.** Text recognition runs locally when saving, including long receipts. No AI account is needed.
 - **Front and back together.** Review each sheet, zoom either side, rotate, crop, or remove pages. Removed pages can be restored.
 - **Recoverable drafts.** Completed pages are saved as you go, including across app restarts.
 - **Skip blank pages.** Hide clearly blank fronts or backs, including single-sided scans, with restoration before saving.
@@ -79,7 +80,7 @@ Existing-login integrations use the official SDKs. Availability depends on your 
 
 New saves go to `_Inbox` first. The worker extracts text locally, proposes a filename and folder, then makes a second AI call to check the proposal. You can keep scanning while it runs.
 
-Open **Saved documents** to see progress, approve a suggestion, change its name or folder, retry, Undo, or **Show PDF in Finder**. New folders, weak OCR, possible duplicates, related documents, and disagreements between the two checks require review. Related files are never automatically merged.
+Open **Saved documents** to see progress, approve a suggestion, change its name or folder, retry, Undo, or **Show PDF in Finder**. New folders, weak OCR, possible duplicates, continuation pages, and disagreements between the two checks require review. Separate purchases from the same vendor can file automatically when the other checks pass. Related files are never automatically merged.
 
 Enabling AI does **not** retroactively organize PDFs saved before it was enabled. It applies to subsequent saves, including a draft started before enabling it.
 
@@ -113,6 +114,8 @@ A new model supported by an existing provider only needs a model ID in settings.
 The default tests use synthetic documents and fake scanners/providers. No account, API key, or connected scanner is needed to run them. CI runs the same command on macOS. Live provider checks are separately opt-in.
 
 See [contributing](docs/contributing.md) for a first change, [test evidence](docs/validation.md) for what is verified, and [troubleshooting](docs/troubleshooting.md) for scanner or filing problems.
+
+Report suspected security vulnerabilities through [private vulnerability reporting](SECURITY.md).
 
 ## Current limits
 
